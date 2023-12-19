@@ -9,7 +9,7 @@
     "video video" 1fr
     "play search" auto / auto 1fr;
 
-  max-block-size: calc(100vb - 16px);
+  gap: 5px;
 }
 
 
@@ -20,6 +20,9 @@ canvas {
   object-fit: scale-down;
   inline-size: 100%;
   block-size: 100%;
+
+
+  background-color: black;
 }
 button {
   grid-area: play;
