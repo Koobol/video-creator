@@ -9,7 +9,7 @@
 
 /**
  * @typedef {(canvas: OffscreenCanvas) => void} setup
- * @typedef {(canvas: OffscreenCanvas) => void} draw
+ * @typedef {(canvas: OffscreenCanvas) => void | 0} draw
  */
 
 
@@ -25,5 +25,18 @@ self.addEventListener("message",
     const { setup, draw } = await import(event.data.src);
 
     setup(canvas);
+
+
+    /** @type ImageBitmap[] */
+    const frames = [];
+
+    draw(canvas);
+    while (true) {
+      try { frames.push(canvas.transferToImageBitmap()); }
+      finally { if (draw(canvas) === 0) break; }
+    }
+
+
+    self.postMessage(frames);
   },
 );
