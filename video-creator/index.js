@@ -37,12 +37,12 @@ class VideoCreator extends HTMLElement {
 
 
     this.#worker = new Worker("video-creator/render.js", { type: "module" });
-    this.#worker.postMessage({
+    this.#worker.postMessage(/** @type renderInit */ ({
       width: this.#preview.width,
       height: this.#preview.height,
-      src: this.src[0] === "/" || /^\w+:\/\//.test(this.src) ? this.src
+      src: this.src[0] === "/" || /^[a-z]+:\/\//i.test(this.src) ? this.src
         : location.pathname.match(/.*\//) + this.src,
-    });
+    }));
   }
 
 
