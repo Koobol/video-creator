@@ -4,7 +4,7 @@ class VideoCreator extends HTMLElement {
   static {
     const template = document.createElement("template");
     template.innerHTML = `
-      <link rel="stylesheet" href="video-creator.css">
+      <link rel="stylesheet" href="video-creator/index.css">
 
       <canvas></canvas>
       <button type="button" disabled></button>
@@ -36,17 +36,20 @@ class VideoCreator extends HTMLElement {
       this.#preview.height = this.height;
 
 
-    this.#worker = new Worker("render.js", { type: "module" });
+    this.#worker = new Worker("video-creator/render.js", { type: "module" });
     this.#worker.postMessage({
       width: this.#preview.width,
       height: this.#preview.height,
-      src: this.getAttribute("src") ?? "",
+      src: this.src[0] === "/" || /^\w+:\/\//.test(this.src) ? this.src
+        : location.pathname.match(/.*\//) + this.src,
     });
   }
 
 
   get width() { return Number(this.getAttribute("width")); }
   get height() { return Number(this.getAttribute("height")); }
+
+  get src() { return this.getAttribute("src") ?? ""; }
 }
 
 
