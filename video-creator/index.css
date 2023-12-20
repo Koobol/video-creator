@@ -36,8 +36,10 @@ button {
 
 
     border: solid;
-    border-width: 7px 0 7px 12px;
-    border-color: transparent transparent transparent currentcolor;
+    border-block-width: 7px;
+    border-inline-width: 12px 0;
+    border-color: transparent;
+    border-inline-start-color: currentcolor;
 
     block-size: 14px;
     inline-size: 12px;
@@ -48,7 +50,8 @@ button {
     transition: border 0.1s;
   }
   &[aria-checked="true"]::before {
-    border-width: 0 4px;
+    border-block-width: 0;
+    border-inline-width: 4px;
     border-inline-end-color: currentcolor;
   }
 }
