@@ -7,7 +7,12 @@ class VideoCreator extends HTMLElement {
       <link rel="stylesheet" href="video-creator/index.css">
 
       <canvas></canvas>
-      <button type="button" disabled></button>
+      <button
+        type="button"
+        role="switch"
+        aria-checked="false"
+        disabled
+      ></button>
       <input type="range" disabled value="0" step="1">
     `;
     
@@ -61,6 +66,15 @@ class VideoCreator extends HTMLElement {
 
 
         range.dispatchEvent(new Event("input"));
+
+
+        const play = /** @type HTMLButtonElement */
+          (shadow.querySelector("button"));
+        play.disabled = false;
+        
+        play.addEventListener("click", () => {
+          play.ariaChecked = `${play.ariaChecked === "false"}`;
+        });
       },
     );
   }
