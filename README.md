@@ -9,6 +9,6 @@ Using it you will be able to write Javascript code to manipulate an `OffScreenCa
 
 
 ## Steps
-1. [ ] Generation and previewing of videos.
-2. [ ] Ability to download video file.
-3. [ ] Videos have audio.
+1. [x] Generation and previewing of videos.
+2. [ ] Videos have audio.
+3. [ ] Ability to download video file.

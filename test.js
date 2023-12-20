@@ -2,9 +2,14 @@
 /** @type {OffscreenCanvasRenderingContext2D} */
 let ctx;
 
+/** @type number */
+let fps;
+
+
 /** @type setup */
-export function setup(canvas) {
+export function setup(canvas, { framerate }) {
   ctx = /** @type OffscreenCanvasRenderingContext2D */ (canvas.getContext("2d"));
+  fps = framerate;
 }
 
 
@@ -18,5 +23,5 @@ export function draw(canvas) {
   ctx.fillRect(x, (canvas.height - 100) / 2, 100, 100);
 
 
-  x += 3;
+  x += 400 / fps;
 }

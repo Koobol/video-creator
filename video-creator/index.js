@@ -20,6 +20,15 @@ class VideoCreator extends HTMLElement {
   }
 
 
+  #play;
+  #search;
+
+  #preview
+  #ctx;
+
+  /** @type ImageBitmap[] */
+  #frames;
+
   constructor() {
     super();
 
@@ -28,52 +37,59 @@ class VideoCreator extends HTMLElement {
     shadow.appendChild(VideoCreator.shadow);
 
 
-    const preview = /** @type {HTMLCanvasElement} */
+    this.#preview = /** @type {HTMLCanvasElement} */
       (shadow.querySelector("canvas"));
 
-    const ctx = /** @type CanvasRenderingContext2D */ (preview.getContext("2d"));
+    this.#ctx = /** @type CanvasRenderingContext2D */
+      (this.#preview.getContext("2d"));
 
     if (this.width)
-      preview.width = this.width;
+      this.#preview.width = this.width;
     if (this.height)
-      preview.height = this.height;
+      this.#preview.height = this.height;
+
+
+    this.#play = /** @type HTMLButtonElement */ (shadow.querySelector("button"));
+    this.#search = /** @type HTMLInputElement */ (shadow.querySelector("input"));
 
 
     const worker = new Worker("video-creator/render.js", { type: "module" });
     worker.postMessage(/** @type renderInit */ ({
-      width: preview.width,
-      height: preview.height,
+      width: this.#preview.width,
+      height: this.#preview.height,
       src: this.src[0] === "/" || /^[a-z]+:\/\//i.test(this.src) ? this.src
         : location.pathname.match(/.*\//) + this.src,
+      framerate: this.framerate,
     }));
 
     worker.addEventListener(
       "message",
       /** @param {MessageEvent<ImageBitmap[]>} event */
       event => {
-        const range = /** @type HTMLInputElement */
-          (shadow.querySelector("input[type=\"range\"]"));
-        range.disabled = false;
-        range.max = `${event.data.length - 1}`;
+        this.#frames = event.data;
 
 
-        range.addEventListener("input", () => {
-          ctx.fillRect(0, 0, preview.width, preview.height);
+        this.#search.disabled = false;
+        this.#search.max = `${this.#frames.length - 1}`;
 
 
-          ctx.drawImage(event.data[range.valueAsNumber], 0, 0);
+        this.#search.addEventListener("input", () => {
+          this.#frame = this.frame;
+
+          this.pause();
         });
 
 
-        range.dispatchEvent(new Event("input"));
+        this.#search.dispatchEvent(new Event("input"));
 
 
-        const play = /** @type HTMLButtonElement */
-          (shadow.querySelector("button"));
-        play.disabled = false;
+        this.#play.disabled = false;
         
-        play.addEventListener("click", () => {
-          play.ariaChecked = `${play.ariaChecked === "false"}`;
+        this.#play.addEventListener("click", () => {
+          this.#play.ariaChecked = `${this.#play.ariaChecked === "false"}`;
+
+          if (this.#play.ariaChecked === "true") this.play();
+          else this.pause();
         });
       },
     );
@@ -84,6 +100,70 @@ class VideoCreator extends HTMLElement {
   get height() { return Number(this.getAttribute("height")); }
 
   get src() { return this.getAttribute("src") ?? ""; }
+
+  get framerate() {
+    const framerateAttr = Number(this.getAttribute("framerate"));
+    return framerateAttr >= 0 ? framerateAttr : 60;
+  }
+
+
+  /** @type number? */
+  #playInterval = null;
+  /**
+   * start playing the preview
+   */
+  play() {
+    if (this.#playInterval !== null) return;
+
+
+    this.#play.ariaChecked = "true";
+
+
+    if (this.#search.valueAsNumber >= this.#frames.length - 1)
+      this.#search.valueAsNumber = 0;
+
+    this.#playInterval = setInterval(() => {
+      if (this.#search.valueAsNumber >= this.#frames.length - 1) {
+        this.pause();
+
+        return;
+      }
+
+
+      this.frame++;
+    }, 1000 / this.framerate);
+  }
+
+  /**
+   * pause the preview
+   */
+  pause() {
+    clearInterval(this.#playInterval);
+    this.#playInterval = null;
+
+    this.#play.ariaChecked = false;
+  }
+
+
+  get frame() { return this.#search.valueAsNumber; }
+  /**
+   * update preview without updating search bar
+   */
+  set #frame(frame) {
+    this.#ctx.clearRect(0, 0, this.#preview.width, this.#preview.height);
+
+
+    this.#ctx.drawImage(this.#frames[frame], 0, 0);
+  }
+  set frame(frame) {
+    if (frame >= this.#frames?.length || frame < 0)
+      throw new RangeError("frame does not exist");
+
+    this.#search.valueAsNumber = frame;
+
+
+    this.#frame = frame;
+  }
 }
 
 

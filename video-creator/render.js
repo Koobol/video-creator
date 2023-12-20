@@ -4,12 +4,16 @@
  * @prop {number} width - the width of the video
  * @prop {number} height - the height of the video
  * @prop {string} src - the file giving instructions on how to render the video
+ * @prop {number} framerate - the framerate of the video
  */
 
 
 /**
- * @typedef {(canvas: OffscreenCanvas) => void} setup
+ * @typedef {(canvas: OffscreenCanvas, setupInit: setupInit) => void} setup
  * @typedef {(canvas: OffscreenCanvas) => void | 0} draw
+ *
+ * @typedef setupInit
+ * @prop {number} framerate - the framerate of the video
  */
 
 
@@ -25,7 +29,7 @@ self.addEventListener(
      */
     const { setup, draw } = await import(event.data.src);
 
-    setup(canvas);
+    setup(canvas, { framerate: event.data.framerate });
 
 
     /** @type ImageBitmap[] */
