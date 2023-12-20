@@ -35,13 +35,13 @@ self.addEventListener(
     /** @type ImageBitmap[] */
     const frames = [];
 
-    draw(canvas);
     while (true) {
-      try { frames.push(canvas.transferToImageBitmap()); }
-      finally { if (draw(canvas) === 0) break; }
+      if (draw(canvas) === 0) break;
+
+      frames.push(canvas.transferToImageBitmap());
     }
 
 
-    self.postMessage(frames);
+    postMessage(frames);
   },
 );
