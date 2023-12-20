@@ -15,34 +15,54 @@ class VideoCreator extends HTMLElement {
   }
 
 
-  #shadow;
-  #preview;
-
-  #worker;
   constructor() {
     super();
 
 
-    this.#shadow = this.attachShadow({ mode: "closed" });
-    this.#shadow.appendChild(VideoCreator.shadow);
+    const shadow = this.attachShadow({ mode: "closed" });
+    shadow.appendChild(VideoCreator.shadow);
 
 
-    this.#preview = /** @type {HTMLCanvasElement} */
-      (this.#shadow.querySelector("canvas"));
+    const preview = /** @type {HTMLCanvasElement} */
+      (shadow.querySelector("canvas"));
+
+    const ctx = /** @type CanvasRenderingContext2D */ (preview.getContext("2d"));
 
     if (this.width)
-      this.#preview.width = this.width;
+      preview.width = this.width;
     if (this.height)
-      this.#preview.height = this.height;
+      preview.height = this.height;
 
 
-    this.#worker = new Worker("video-creator/render.js", { type: "module" });
-    this.#worker.postMessage(/** @type renderInit */ ({
-      width: this.#preview.width,
-      height: this.#preview.height,
+    const worker = new Worker("video-creator/render.js", { type: "module" });
+    worker.postMessage(/** @type renderInit */ ({
+      width: preview.width,
+      height: preview.height,
       src: this.src[0] === "/" || /^[a-z]+:\/\//i.test(this.src) ? this.src
         : location.pathname.match(/.*\//) + this.src,
     }));
+
+    worker.addEventListener(
+      "message",
+      /** @param {MessageEvent<ImageBitmap[]>} event */
+      event => {
+        const range = /** @type HTMLInputElement */
+          (shadow.querySelector("input[type=\"range\"]"));
+        range.disabled = false;
+        range.max = `${event.data.length - 1}`;
+
+
+        range.addEventListener("input", () => {
+          ctx.fillRect(0, 0, preview.width, preview.height);
+
+
+          ctx.drawImage(event.data[range.valueAsNumber], 0, 0);
+        });
+
+
+        range.dispatchEvent(new Event("input"));
+      },
+    );
   }
 
 

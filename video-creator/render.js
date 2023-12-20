@@ -13,7 +13,8 @@
  */
 
 
-self.addEventListener("message",
+self.addEventListener(
+  "message",
   /** @param {MessageEvent<renderInit>} event */
   async event => {
     const canvas = new OffscreenCanvas(event.data.width, event.data.height);
