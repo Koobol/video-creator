@@ -107,47 +107,80 @@ class VideoCreator extends HTMLElement {
   }
 
 
-  /** @type number? */
-  #playInterval = null;
+  /** @type number= */
+  #playTimeout;
   /**
    * start playing the preview
    */
   play() {
-    if (this.#playInterval !== null) return;
+    if (this.#playTimeout !== undefined) return;
 
 
     this.#play.ariaChecked = "true";
 
 
-    if (this.#search.valueAsNumber >= this.#frames.length - 1)
-      this.#search.valueAsNumber = 0;
+    if (this.frame >= this.#frames.length - 1)
+      this.frame = 0;
 
-    this.#playInterval = setInterval(() => {
-      if (this.#search.valueAsNumber >= this.#frames.length - 1) {
-        this.pause();
 
-        return;
+    // TODO simplify horrible spaghetti code
+    const start = Date.now();
+
+
+    const targetTime = 1000 / this.framerate;
+
+    let nextTime = targetTime;
+
+    let lastFrame = Date.now();
+
+    const nextFrame = () => {
+      const passedTime = Date.now() - lastFrame;
+
+      lastFrame = Date.now();
+
+
+      nextTime = targetTime - (passedTime - nextTime);
+
+
+      while (nextTime < 0) {
+        nextTime += targetTime;
+        this.frame = Math.min(this.frame + 1, this.#frames.length - 2);
       }
+      console.log(nextTime, passedTime, targetTime)
 
 
       this.frame++;
-    }, 1000 / this.framerate);
+      
+
+      this.#playTimeout = setTimeout(nextFrame, targetTime);
+
+
+      if (this.frame >= this.#frames.length - 1) {
+        this.pause();
+
+
+        console.log(this.#frames.length / (Date.now() - start) * 1000);
+      }
+    };
+
+    this.#playTimeout = setTimeout(nextFrame, targetTime);
   }
 
   /**
    * pause the preview
    */
   pause() {
-    clearInterval(this.#playInterval);
-    this.#playInterval = null;
+    clearTimeout(this.#playTimeout);
+    this.#playTimeout = undefined;
 
-    this.#play.ariaChecked = false;
+    this.#play.ariaChecked = "false";
   }
 
 
   get frame() { return this.#search.valueAsNumber; }
   /**
    * update preview without updating search bar
+   * @param {number} frame
    */
   set #frame(frame) {
     this.#ctx.clearRect(0, 0, this.#preview.width, this.#preview.height);
