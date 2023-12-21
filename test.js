@@ -23,5 +23,5 @@ export function draw(canvas) {
   ctx.fillRect(x, (canvas.height - 100) / 2, 100, 100);
 
 
-  x += 400 / fps;
+  x += 200 / fps;
 }

@@ -123,44 +123,32 @@ class VideoCreator extends HTMLElement {
       this.frame = 0;
 
 
-    // TODO simplify horrible spaghetti code
-    const start = Date.now();
-
-
     const targetTime = 1000 / this.framerate;
 
-    let nextTime = targetTime;
+    let requestedTime = targetTime;
 
     let lastFrame = Date.now();
 
     const nextFrame = () => {
-      const passedTime = Date.now() - lastFrame;
+      const actualTime = Date.now() - lastFrame;
 
       lastFrame = Date.now();
 
 
-      nextTime = targetTime - (passedTime - nextTime);
+      const offset = actualTime - requestedTime;
 
 
-      while (nextTime < 0) {
-        nextTime += targetTime;
-        this.frame = Math.min(this.frame + 1, this.#frames.length - 2);
-      }
-      console.log(nextTime, passedTime, targetTime)
-
-
-      this.frame++;
+      requestedTime = targetTime * Math.ceil(offset / targetTime) - offset;
+      this.frame = Math.min(
+        this.frame + Math.ceil(offset / targetTime),
+        this.#frames.length - 1,
+      );
       
 
       this.#playTimeout = setTimeout(nextFrame, targetTime);
 
 
-      if (this.frame >= this.#frames.length - 1) {
-        this.pause();
-
-
-        console.log(this.#frames.length / (Date.now() - start) * 1000);
-      }
+      if (this.frame >= this.#frames.length - 1) this.pause();
     };
 
     this.#playTimeout = setTimeout(nextFrame, targetTime);
@@ -190,7 +178,7 @@ class VideoCreator extends HTMLElement {
   }
   set frame(frame) {
     if (frame >= this.#frames?.length || frame < 0)
-      throw new RangeError("frame does not exist");
+      throw new RangeError(`frame ${frame} does not exist`);
 
     this.#search.valueAsNumber = frame;
 
