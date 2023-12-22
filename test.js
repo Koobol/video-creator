@@ -6,7 +6,7 @@ let ctx;
 let fps;
 
 
-/** @type setup */
+/** @type Setup */
 export function setup(canvas, { framerate }) {
   ctx = /** @type OffscreenCanvasRenderingContext2D */ (canvas.getContext("2d"));
   fps = framerate;
@@ -14,12 +14,12 @@ export function setup(canvas, { framerate }) {
 
 
 let x = 0;
-/** @type draw */
+/** @type Draw */
 export function draw(canvas) {
   if (x > canvas.width - 100) return 0;
 
 
-  ctx.fillStyle = "blue";
+  ctx.fillStyle = x <= 200 ? "blue" : "lime";
   ctx.fillRect(x, (canvas.height - 100) / 2, 100, 100);
 
 

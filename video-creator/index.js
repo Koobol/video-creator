@@ -54,7 +54,7 @@ class VideoCreator extends HTMLElement {
 
 
     const worker = new Worker("video-creator/render.js", { type: "module" });
-    worker.postMessage(/** @type renderInit */ ({
+    worker.postMessage(/** @type RenderInit */ ({
       width: this.#preview.width,
       height: this.#preview.height,
       src: this.src[0] === "/" || /^[a-z]+:\/\//i.test(this.src) ? this.src
@@ -64,7 +64,7 @@ class VideoCreator extends HTMLElement {
 
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<renderOutput>} event */
+      /** @param {MessageEvent<RenderOutput>} event */
       ({ data }) => {
         this.#frames = data.frames;
 
