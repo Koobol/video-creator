@@ -1,5 +1,5 @@
 // @ts-check
-/** @type {OffscreenCanvasRenderingContext2D} */
+/** @type OffscreenCanvasRenderingContext2D */
 let ctx;
 
 /** @type number */

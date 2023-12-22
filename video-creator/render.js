@@ -8,8 +8,8 @@
  *
  * @typedef RenderOutput
  * @prop {ImageBitmap[]} frames - the frames of video
- * @prop {Set<AudioInstruction>} audioInstructions
- *   - instructions on how to play audio
+ * @prop {Map<bigint, AudioInstruction[]>} audioInstructions
+ *   - keys are the id, values are the instructions
  * @prop {Set<string>} audioFiles - the audio files to load
  *
  *
@@ -29,7 +29,6 @@
  *
  * @typedef BaseAudioInstruction
  * @prop {number} frame - the frame that the instruction happens on
- * @prop {bigint} id - the id of the sound
  *
  * @typedef StartSound
  * @prop {"start"} type
@@ -56,12 +55,12 @@ self.addEventListener(
 
     let frame = 0;
 
-    /** @type ImageBitmap[] */
+    /** @type RenderOutput["frames"] */
     const frames = [];
 
-    /** @type Set<AudioInstruction> */
-    const audioInstructions = new Set();
-    /** @type Set<string> */
+    /** @type RenderOutput["audioInstructions"]*/
+    const audioInstructions = new Map();
+    /** @type RenderOutput["audioFiles"] */
     const audioFiles = new Set();
     let nextId = 0n;
     const audioAPI = {
@@ -69,7 +68,7 @@ self.addEventListener(
       playSound(source) {
         const id = nextId++;
 
-        audioInstructions.add({ type: "start", frame, id, source });
+        audioInstructions.set(id, [{ type: "start", frame, source }]);
 
 
         if (!audioFiles.has(source)) audioFiles.add(source);
