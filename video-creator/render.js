@@ -8,9 +8,8 @@
  *
  * @typedef RenderOutput
  * @prop {ImageBitmap[]} frames - the frames of video
- * @prop {Map<bigint, AudioInstruction[]>} audioInstructions
- *   - keys are the id, values are the instructions
- * @prop {Set<string>} audioFiles - the audio files to load
+ * @prop {Map<string, Set<AudioInstruction>>} audioInstructions
+ *   - keys are audio file being used, values are the sounds being played
  *
  *
  * @typedef {(canvas: OffscreenCanvas, setupInit: SetupInit) => void} Setup
@@ -24,19 +23,11 @@
  *
  * @typedef AudioAPI
  * @prop {PlaySound} playSound
- * @typedef {(source: string) => bigint} PlaySound
+ * @typedef {(source: string) => AudioInstruction} PlaySound
  *
  *
- * @typedef BaseAudioInstruction
- * @prop {number} frame - the frame that the instruction happens on
- *
- * @typedef StartSound
- * @prop {"start"} type
- * @prop {string} source - the source file of the sound
- *
- * @typedef {(
- *   (StartSound & BaseAudioInstruction)
- * )} AudioInstruction
+ * @typedef AudioInstruction
+ * @prop {number} timestamp - the time that the sound starts playing in seconds
  */
 
 
@@ -60,21 +51,21 @@ self.addEventListener(
 
     /** @type RenderOutput["audioInstructions"]*/
     const audioInstructions = new Map();
-    /** @type RenderOutput["audioFiles"] */
-    const audioFiles = new Set();
-    let nextId = 0n;
     const audioAPI = {
       /** @type PlaySound */
       playSound(source) {
-        const id = nextId++;
-
-        audioInstructions.set(id, [{ type: "start", frame, source }]);
-
-
-        if (!audioFiles.has(source)) audioFiles.add(source);
+        const instruction = {
+          timestamp: frame / framerate,
+        };
 
 
-        return id;
+        if (!audioInstructions.has(source))
+          audioInstructions.set(source, new Set());
+        audioInstructions.get(source)?.add(instruction);
+
+
+
+        return instruction;
       }
     };
 
@@ -90,7 +81,6 @@ self.addEventListener(
     postMessage(/** @type RenderOutput */ ({
       frames,
       audioInstructions,
-      audioFiles,
     }), { transfer: frames });
   },
 );

@@ -23,11 +23,18 @@ class VideoCreator extends HTMLElement {
   #play;
   #search;
 
-  #preview
+
+  #preview;
   #ctx;
+
+  /** @type {AudioContext?} */
+  #audioCtx = null;
+
 
   /** @type ImageBitmap[] */
   #frames;
+  /** @type AudioBuffer */
+  #audio;
 
   constructor() {
     super();
@@ -65,11 +72,35 @@ class VideoCreator extends HTMLElement {
     worker.addEventListener(
       "message",
       /** @param {MessageEvent<RenderOutput>} event */
-      ({ data: { frames, audioInstructions, audioFiles } }) => {
+      async ({ data: { frames, audioInstructions } }) => {
         this.#frames = frames;
 
 
-        console.log(audioInstructions, audioFiles);
+        // compile audioInstructions
+        const audioCtx = new OfflineAudioContext(
+          1,
+          frames.length / this.framerate * 44100,
+          44100,
+        );
+
+        /** @type Promise<void>[]*/
+        const promises = [];
+        for (const [fileName, instructions] of audioInstructions) {
+          promises.push((async () => {
+            const buffer = await audioCtx.decodeAudioData(
+              await (await fetch(fileName)).arrayBuffer(),
+            );
+
+            for (const instruction of instructions) {
+              const bufferSrc = new AudioBufferSourceNode(audioCtx, { buffer });
+              bufferSrc.connect(audioCtx.destination);
+              bufferSrc.start(instruction.timestamp);
+            }
+          })());
+        }
+        await Promise.all(promises);
+
+        this.#audio = await audioCtx.startRendering();
 
 
         this.#search.disabled = false;
@@ -155,6 +186,26 @@ class VideoCreator extends HTMLElement {
     };
 
     this.#playTimeout = setTimeout(nextFrame, targetTime);
+
+
+    if (this.#audioCtx === null) this.#audioCtx = new AudioContext();
+
+    const offset =
+      Math.floor(this.frame / this.framerate * this.#audio.sampleRate);
+    const buffer = this.#audioCtx.createBuffer(
+      this.#audio.numberOfChannels,
+      this.#audio.length - offset,
+      this.#audio.sampleRate,
+    );
+    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+      const data = new Float32Array(this.#audio.length - offset);
+      this.#audio.copyFromChannel(data, channel, offset);
+      buffer.copyToChannel(data, channel);
+    }
+
+    const bufferSrc = new AudioBufferSourceNode(this.#audioCtx, { buffer });
+    bufferSrc.connect(this.#audioCtx.destination);
+    bufferSrc.start(0);
   }
 
   /**
@@ -165,6 +216,10 @@ class VideoCreator extends HTMLElement {
     this.#playTimeout = undefined;
 
     this.#play.ariaChecked = "false";
+
+
+    this.#audioCtx?.close();
+    this.#audioCtx = null;
   }
 
 
