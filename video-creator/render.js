@@ -8,7 +8,7 @@
  *
  * @typedef RenderOutput
  * @prop {ImageBitmap[]} frames - the frames of video
- * @prop {AudioInstruction[]} audioInstructions
+ * @prop {Set<AudioInstruction>} audioInstructions
  *   - instructions on how to play audio
  *
  *
@@ -58,15 +58,15 @@ self.addEventListener(
     /** @type ImageBitmap[] */
     const frames = [];
 
-    /** @type AudioInstruction[] */
-    const audioInstructions = [];
+    /** @type Set<AudioInstruction> */
+    const audioInstructions = new Set();
     let nextId = 0n;
     const audioAPI = {
       /** @type PlaySound */
       playSound(source) {
         const id = nextId++;
 
-        audioInstructions.push({ type: "start", frame, id, source });
+        audioInstructions.add({ type: "start", frame, id, source });
 
         return id;
       }
