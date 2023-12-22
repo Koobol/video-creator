@@ -81,7 +81,6 @@ self.addEventListener(
     }
 
 
-    debugger;
     postMessage(/** @type RenderOutput */ ({
       frames,
       audioInstructions,
