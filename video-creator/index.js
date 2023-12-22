@@ -27,8 +27,9 @@ class VideoCreator extends HTMLElement {
   #preview;
   #ctx;
 
-  /** @type {AudioContext?} */
-  #audioCtx = null;
+  #audioCtx = new AudioContext();
+  /** @type {AudioBufferSourceNode?} */
+  #playing = null;
 
 
   /** @type ImageBitmap[] */
@@ -188,7 +189,8 @@ class VideoCreator extends HTMLElement {
     this.#playTimeout = setTimeout(nextFrame, targetTime);
 
 
-    if (this.#audioCtx === null) this.#audioCtx = new AudioContext();
+    if (this.#audioCtx.state === "suspended")
+      this.#audioCtx.resume();
 
     const offset =
       Math.floor(this.frame / this.framerate * this.#audio.sampleRate);
@@ -203,9 +205,9 @@ class VideoCreator extends HTMLElement {
       buffer.copyToChannel(data, channel);
     }
 
-    const bufferSrc = new AudioBufferSourceNode(this.#audioCtx, { buffer });
-    bufferSrc.connect(this.#audioCtx.destination);
-    bufferSrc.start(0);
+    this.#playing = new AudioBufferSourceNode(this.#audioCtx, { buffer });
+    this.#playing.connect(this.#audioCtx.destination);
+    this.#playing.start(0);
   }
 
   /**
@@ -218,8 +220,8 @@ class VideoCreator extends HTMLElement {
     this.#play.ariaChecked = "false";
 
 
-    this.#audioCtx?.close();
-    this.#audioCtx = null;
+    this.#audioCtx.suspend();
+    this.#playing?.stop();
   }
 
 
