@@ -65,8 +65,11 @@ class VideoCreator extends HTMLElement {
     worker.addEventListener(
       "message",
       /** @param {MessageEvent<RenderOutput>} event */
-      ({ data: { frames } }) => {
+      ({ data: { frames, audioInstructions, audioFiles } }) => {
         this.#frames = frames;
+
+
+        console.log(audioInstructions, audioFiles);
 
 
         this.#search.disabled = false;

@@ -10,6 +10,7 @@
  * @prop {ImageBitmap[]} frames - the frames of video
  * @prop {Set<AudioInstruction>} audioInstructions
  *   - instructions on how to play audio
+ * @prop {Set<string>} audioFiles - the audio files to load
  *
  *
  * @typedef {(canvas: OffscreenCanvas, setupInit: SetupInit) => void} Setup
@@ -43,14 +44,14 @@
 self.addEventListener(
   "message",
   /** @param {MessageEvent<RenderInit>} event */
-  async event => {
-    const canvas = new OffscreenCanvas(event.data.width, event.data.height);
+  async ({ data: { width, height, framerate, src } }) => {
+    const canvas = new OffscreenCanvas(width, height);
 
 
     /** @type {{ setup: Setup; draw: Draw }} */
-    const { setup, draw } = await import(event.data.src);
+    const { setup, draw } = await import(src);
 
-    setup(canvas, { framerate: event.data.framerate });
+    setup(canvas, { framerate: framerate });
 
 
     let frame = 0;
@@ -60,6 +61,8 @@ self.addEventListener(
 
     /** @type Set<AudioInstruction> */
     const audioInstructions = new Set();
+    /** @type Set<string> */
+    const audioFiles = new Set();
     let nextId = 0n;
     const audioAPI = {
       /** @type PlaySound */
@@ -67,6 +70,10 @@ self.addEventListener(
         const id = nextId++;
 
         audioInstructions.add({ type: "start", frame, id, source });
+
+
+        if (!audioFiles.has(source)) audioFiles.add(source);
+
 
         return id;
       }
@@ -84,6 +91,7 @@ self.addEventListener(
     postMessage(/** @type RenderOutput */ ({
       frames,
       audioInstructions,
+      audioFiles,
     }), { transfer: frames });
   },
 );
