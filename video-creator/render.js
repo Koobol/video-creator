@@ -5,15 +5,16 @@
  * @prop {number} height - the height of the video
  * @prop {string} src - the file giving instructions on how to render the video
  * @prop {number} framerate - the framerate of the video
- */
-
-
-/**
- * @typedef {(canvas: OffscreenCanvas, setupInit: setupInit) => void} setup
- * @typedef {(canvas: OffscreenCanvas) => void | 0} draw
  *
+ * @typedef renderOutput
+ * @prop {ImageBitmap[]} frames - the frames of video
+ *
+ *
+ * @typedef {(canvas: OffscreenCanvas, setupInit: setupInit) => void} setup
  * @typedef setupInit
  * @prop {number} framerate - the framerate of the video
+ *
+ * @typedef {(canvas: OffscreenCanvas) => void | 0} draw
  */
 
 
@@ -42,6 +43,8 @@ self.addEventListener(
     }
 
 
-    postMessage(frames);
+    postMessage(/** @type renderOutput */ ({
+      frames,
+    }));
   },
 );

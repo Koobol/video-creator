@@ -64,9 +64,9 @@ class VideoCreator extends HTMLElement {
 
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<ImageBitmap[]>} event */
-      event => {
-        this.#frames = event.data;
+      /** @param {MessageEvent<renderOutput>} event */
+      ({ data }) => {
+        this.#frames = data.frames;
 
 
         this.#search.disabled = false;
