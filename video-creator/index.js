@@ -66,6 +66,9 @@ class VideoCreator extends HTMLElement {
       "message",
       /** @param {MessageEvent<RenderOutput>} event */
       ({ data }) => {
+        console.log(data);
+
+
         this.#frames = data.frames;
 
 
