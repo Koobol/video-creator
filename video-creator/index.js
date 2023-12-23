@@ -247,7 +247,7 @@ class VideoCreator extends HTMLElement {
   }
 
 
-  generateVideo() {
+  async generateVideo() {
     const renderer = document.createElement("canvas");
     const ctx = renderer.getContext("bitmaprenderer");
 
@@ -280,24 +280,98 @@ class VideoCreator extends HTMLElement {
     recorder.addEventListener("dataavailable", ({ data }) => {
       chunks.push(data);
     });
-    recorder.addEventListener("stop", () => {
-      const videoPhase1 = new Blob(chunks, { type: "video/webm" });
-
-      // video is being downloaded just for testing purposes
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(videoPhase1);
-      a.download = "video.webm";
-
-      a.click();
-
-      URL.revokeObjectURL(a.href);
-    });
 
 
     recorder.start();
     nextFrame();
+
+
+    await waitForEvent(recorder, "stop");
+
+    const videoPhase1 = new Blob(chunks, { type: "video/webm" });
+
+    const videoElement = document.createElement("video");
+    videoElement.src = URL.createObjectURL(videoPhase1);
+
+    await waitForEvent(videoElement, "loadedmetadata");
+    console.log(videoElement.duration, this.#frames.length / this.frameRate);
+    // TODO for some reason playbackRate doesn't work properly when used with
+    //      captureStream, so this solution doesn't work
+    videoElement.playbackRate = Math.round(videoElement.duration /
+      (this.#frames.length / this.frameRate) * 10) / 10;
+    console.log(videoElement.playbackRate);
+
+
+    const audioCtx = new AudioContext();
+    const dest = audioCtx.createMediaStreamDestination();
+
+    const bufferSrc = new AudioBufferSourceNode(audioCtx, {
+      buffer: this.#audio,
+    });
+    bufferSrc.connect(dest);
+
+
+    if (!("captureStream" in HTMLMediaElement.prototype)) {
+      // @ts-ignore
+      HTMLMediaElement.prototype.captureStream =
+        // @ts-ignore
+        HTMLMediaElement.prototype.mozCaptureStream;
+      if (!("mozCaptureStream" in HTMLMediaElement.prototype)) {
+        alert("Sorry, this browser doesn't have the " +
+          "neccessary features to generate a video file.");
+        return;
+      }
+    }
+    const finalRecorder = new MediaRecorder(new MediaStream([
+      // @ts-ignore
+      ...(/** @type {MediaStream} */ (videoElement.captureStream()).getTracks()),
+      ...dest.stream.getTracks(),
+    ]));
+
+    /** @type Blob[] */
+    const finalChunks = [];
+    finalRecorder.addEventListener("dataavailable", ({ data }) => {
+      finalChunks.push(data);
+    });
+
+
+    await videoElement.play();
+    finalRecorder.start();
+    bufferSrc.start();
+
+
+    document.body.appendChild(videoElement);
+
+
+    await waitForEvent(videoElement, "ended");
+    finalRecorder.stop();
+
+    await waitForEvent(finalRecorder, "stop");
+
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(finalChunks));
+    a.download = "video.webm";
+
+    a.click();
+
+    URL.revokeObjectURL(a.href);
+
+
+    URL.revokeObjectURL(videoElement.src);
   }
 }
 
 
 customElements.define("video-creator", VideoCreator);
+
+
+
+/**
+ * @param {EventTarget} target
+ * @param {string} event
+ * @returns {Promise<Event>}
+ */
+function waitForEvent(target, event) {
+  return new Promise(resolve => { target.addEventListener(event, resolve); });
+}
