@@ -67,7 +67,7 @@ class VideoCreator extends HTMLElement {
       height: this.#preview.height,
       src: this.src[0] === "/" || /^[a-z]+:\/\//i.test(this.src) ? this.src
         : location.pathname.match(/.*\//) + this.src,
-      framerate: this.framerate,
+      frameRate: this.frameRate,
     }));
 
     worker.addEventListener(
@@ -80,7 +80,7 @@ class VideoCreator extends HTMLElement {
         // compile audioInstructions
         const audioCtx = new OfflineAudioContext(
           1,
-          frames.length / this.framerate * 44100,
+          frames.length / this.frameRate * 44100,
           44100,
         );
 
@@ -136,7 +136,7 @@ class VideoCreator extends HTMLElement {
 
   get src() { return this.getAttribute("src") ?? ""; }
 
-  get framerate() {
+  get frameRate() {
     const framerateAttr = Number(this.getAttribute("framerate"));
     return framerateAttr >= 0 ? framerateAttr : 60;
   }
@@ -158,7 +158,7 @@ class VideoCreator extends HTMLElement {
       this.frame = 0;
 
 
-    const targetTime = 1000 / this.framerate;
+    const targetTime = 1000 / this.frameRate;
 
     let requestedTime = targetTime;
 
@@ -193,7 +193,7 @@ class VideoCreator extends HTMLElement {
       this.#audioCtx.resume();
 
     const offset =
-      Math.floor(this.frame / this.framerate * this.#audio.sampleRate);
+      Math.floor(this.frame / this.frameRate * this.#audio.sampleRate);
     const buffer = this.#audioCtx.createBuffer(
       this.#audio.numberOfChannels,
       this.#audio.length - offset,
@@ -244,6 +244,58 @@ class VideoCreator extends HTMLElement {
 
 
     this.#frame = frame;
+  }
+
+
+  generateVideo() {
+    const renderer = document.createElement("canvas");
+    const ctx = renderer.getContext("bitmaprenderer");
+
+    const recorder = new MediaRecorder(renderer.captureStream(), {
+      mimeType: "video/webm",
+    });
+
+
+    let frame = 0;
+    const nextFrame = () => {
+      console.log(frame);
+
+
+      if (frame > this.#frames.length) {
+        recorder.stop();
+        return;
+      }
+
+
+      ctx?.transferFromImageBitmap(this.#frames[frame]);
+      frame++;
+
+
+      requestAnimationFrame(nextFrame);
+    }
+
+
+    /** @type Blob[] */
+    const chunks = [];
+    recorder.addEventListener("dataavailable", ({ data }) => {
+      chunks.push(data);
+    });
+    recorder.addEventListener("stop", () => {
+      const videoPhase1 = new Blob(chunks, { type: "video/webm" });
+
+      // video is being downloaded just for testing purposes
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(videoPhase1);
+      a.download = "video.webm";
+
+      a.click();
+
+      URL.revokeObjectURL(a.href);
+    });
+
+
+    recorder.start();
+    nextFrame();
   }
 }
 

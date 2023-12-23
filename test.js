@@ -7,9 +7,9 @@ let fps;
 
 
 /** @type Setup */
-export function setup(canvas, { framerate }) {
+export function setup(canvas, { frameRate }) {
   ctx = /** @type OffscreenCanvasRenderingContext2D */ (canvas.getContext("2d"));
-  fps = framerate;
+  fps = frameRate;
 }
 
 
