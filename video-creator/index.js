@@ -62,7 +62,7 @@ class VideoCreator extends HTMLElement {
 
 
     const worker = new Worker("video-creator/render.js", { type: "module" });
-    worker.postMessage(/** @type RenderInit */ ({
+    worker.postMessage(/** @satisfies {RenderInit} */ ({
       width: this.#preview.width,
       height: this.#preview.height,
       src: this.src[0] === "/" || /^[a-z]+:\/\//i.test(this.src) ? this.src
@@ -248,32 +248,27 @@ class VideoCreator extends HTMLElement {
 
 
   async generateVideo() {
-    const renderer = document.createElement("canvas");
-    const ctx = renderer.getContext("bitmaprenderer");
+    const paint = new Worker("video-creator/paint.js", { type: "module" });
 
-    const recorder = new MediaRecorder(renderer.captureStream(), {
-      mimeType: "video/webm",
+    const canvas = document.createElement("canvas");
+    canvas.width = this.width;
+    canvas.height = this.height;
+
+    const offscreen = canvas.transferControlToOffscreen();
+
+
+    const audioCtx = new AudioContext();
+    const bufferSrc = new AudioBufferSourceNode(audioCtx, {
+      buffer: this.#audio,
     });
+    const dest = audioCtx.createMediaStreamDestination();
+    bufferSrc.connect(dest);
 
 
-    let frame = 0;
-    const nextFrame = () => {
-      console.log(frame);
-
-
-      if (frame > this.#frames.length) {
-        recorder.stop();
-        return;
-      }
-
-
-      ctx?.transferFromImageBitmap(this.#frames[frame]);
-      frame++;
-
-
-      requestAnimationFrame(nextFrame);
-    }
-
+    const recorder = new MediaRecorder(new MediaStream([
+      ...canvas.captureStream().getTracks(),
+      ...dest.stream.getTracks(),
+    ]));
 
     /** @type Blob[] */
     const chunks = [];
@@ -283,82 +278,26 @@ class VideoCreator extends HTMLElement {
 
 
     recorder.start();
-    nextFrame();
-
-
-    await waitForEvent(recorder, "stop");
-
-    const videoPhase1 = new Blob(chunks, { type: "video/webm" });
-
-    const videoElement = document.createElement("video");
-    videoElement.src = URL.createObjectURL(videoPhase1);
-
-    await waitForEvent(videoElement, "loadedmetadata");
-    console.log(videoElement.duration, this.#frames.length / this.frameRate);
-    // TODO for some reason playbackRate doesn't work properly when used with
-    //      captureStream, so this solution doesn't work
-    videoElement.playbackRate = Math.round(videoElement.duration /
-      (this.#frames.length / this.frameRate) * 10) / 10;
-    console.log(videoElement.playbackRate);
-
-
-    const audioCtx = new AudioContext();
-    const dest = audioCtx.createMediaStreamDestination();
-
-    const bufferSrc = new AudioBufferSourceNode(audioCtx, {
-      buffer: this.#audio,
-    });
-    bufferSrc.connect(dest);
-
-
-    if (!("captureStream" in HTMLMediaElement.prototype)) {
-      // @ts-ignore
-      HTMLMediaElement.prototype.captureStream =
-        // @ts-ignore
-        HTMLMediaElement.prototype.mozCaptureStream;
-      if (!("mozCaptureStream" in HTMLMediaElement.prototype)) {
-        alert("Sorry, this browser doesn't have the " +
-          "neccessary features to generate a video file.");
-        return;
-      }
-    }
-    const finalRecorder = new MediaRecorder(new MediaStream([
-      // @ts-ignore
-      ...(/** @type {MediaStream} */ (videoElement.captureStream()).getTracks()),
-      ...dest.stream.getTracks(),
-    ]));
-
-    /** @type Blob[] */
-    const finalChunks = [];
-    finalRecorder.addEventListener("dataavailable", ({ data }) => {
-      finalChunks.push(data);
-    });
-
-
-    await videoElement.play();
-    finalRecorder.start();
+    paint.postMessage(/** @satisfies {paintInit} */ ({
+      frames: this.#frames,
+      offscreen,
+      frameRate: this.frameRate,
+    }), [...this.#frames, offscreen]);
     bufferSrc.start();
 
 
-    document.body.appendChild(videoElement);
+    await waitForEvent(paint, "message");
+    recorder.stop();
 
-
-    await waitForEvent(videoElement, "ended");
-    finalRecorder.stop();
-
-    await waitForEvent(finalRecorder, "stop");
+    await waitForEvent(recorder, "stop");
 
 
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob(finalChunks));
-    a.download = "video.webm";
-
+    a.download = "video";
+    a.href = URL.createObjectURL(new Blob(chunks));
     a.click();
 
     URL.revokeObjectURL(a.href);
-
-
-    URL.revokeObjectURL(videoElement.src);
   }
 }
 
