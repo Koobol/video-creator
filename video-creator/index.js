@@ -8,12 +8,18 @@ class VideoCreator extends HTMLElement {
 
       <canvas></canvas>
       <button
+        id="play"
         type="button"
         role="switch"
         aria-checked="false"
         disabled
       ></button>
       <input type="range" disabled value="0" step="1">
+
+      <div>
+        <button id="download" disabled>Download</button>
+        <progress></progress>
+      </div>
     `;
     
     this.shadow = template.content;
@@ -22,6 +28,9 @@ class VideoCreator extends HTMLElement {
 
   #play;
   #search;
+
+  #download;
+  #progress;
 
 
   #preview;
@@ -57,8 +66,13 @@ class VideoCreator extends HTMLElement {
       this.#preview.height = this.height;
 
 
-    this.#play = /** @type HTMLButtonElement */ (shadow.querySelector("button"));
+    this.#play = /** @type HTMLButtonElement */ (shadow.querySelector("#play"));
     this.#search = /** @type HTMLInputElement */ (shadow.querySelector("input"));
+
+    this.#download = /** @type HTMLButtonElement */
+      (shadow.querySelector("#download"));
+    this.#progress = /** @type HTMLProgressElement */
+      (shadow.querySelector("progress"));
 
 
     const worker = new Worker("video-creator/render.js", { type: "module" });
@@ -126,6 +140,10 @@ class VideoCreator extends HTMLElement {
           if (this.#play.ariaChecked === "true") this.play();
           else this.pause();
         });
+        
+
+        this.#download.disabled = false;
+        this.#download.addEventListener("click", () => { this.generateVideo(); });
       },
     );
   }
@@ -248,6 +266,19 @@ class VideoCreator extends HTMLElement {
 
 
   async generateVideo() {
+    this.#play.disabled = true;
+    this.#search.disabled = true;
+
+    this.pause();
+
+    this.#download.disabled = true;
+
+
+    this.#progress.style.display = "unset";
+    this.#progress.max = this.#frames.length / this.frameRate * 1000;
+    this.#progress.value = 0;
+
+
     const paint = new Worker("video-creator/paint.js", { type: "module" });
 
     const canvas = document.createElement("canvas");
@@ -286,6 +317,17 @@ class VideoCreator extends HTMLElement {
     bufferSrc.start();
 
 
+    const start = Date.now();
+    const displayProgress = () => {
+      this.#progress.value = Date.now() - start;
+
+
+      if (this.#progress.value < this.#progress.max)
+        requestAnimationFrame(displayProgress);
+    }
+    displayProgress();
+
+
     await waitForEvent(paint, "message");
     recorder.stop();
 
@@ -298,6 +340,9 @@ class VideoCreator extends HTMLElement {
     a.click();
 
     URL.revokeObjectURL(a.href);
+
+
+    this.#progress.removeAttribute("style");
   }
 }
 

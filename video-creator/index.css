@@ -6,8 +6,9 @@
 :host {
   display: grid;
   grid-template:
-    "video video" 1fr
-    "play search" auto / auto 1fr;
+    "video    video" 1fr
+    "play     search" auto
+    "download download" / auto 1fr;
 
   gap: 5px;
 
@@ -27,7 +28,7 @@ canvas {
 
   background-color: black;
 }
-button {
+#play {
   grid-area: play;
 
 
@@ -55,6 +56,9 @@ button {
     border-inline-end-color: currentcolor;
   }
 }
-input[type="range"] {
-  grid-area: search;
+input { grid-area: search; }
+div {
+  grid-area: download;
+
+  > progress { display: none; }
 }
