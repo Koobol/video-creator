@@ -12,14 +12,11 @@
  *   - keys are audio file being used, values are the sounds being played
  *
  *
- * @typedef {(canvas: OffscreenCanvas, setupInit: SetupInit) => void} Setup
+ * @typedef {(canvas: OffscreenCanvas, audioAPI: AudioAPI, setupInit: SetupInit) => void} Setup
  * @typedef SetupInit
  * @prop {number} frameRate - the frame rate of the video
  *
- * @typedef {(
- *   canvas: OffscreenCanvas,
- *   audio: AudioAPI,
- * ) => void | 0} Draw
+ * @typedef {() => void | 0} Draw
  *
  * @typedef AudioAPI
  * @prop {PlaySound} playSound
@@ -38,12 +35,6 @@ self.addEventListener(
     const canvas = new OffscreenCanvas(width, height);
 
 
-    /** @type {{ setup: Setup; draw: Draw }} */
-    const { setup, draw } = await import(src);
-
-    setup(canvas, { frameRate });
-
-
     let frame = 0;
 
     /** @type RenderOutput["frames"] */
@@ -60,7 +51,7 @@ self.addEventListener(
 
 
         if (!audioInstructions.has(source))
-          audioInstructions.set(source, new Set());
+        audioInstructions.set(source, new Set());
         audioInstructions.get(source)?.add(instruction);
 
 
@@ -69,8 +60,15 @@ self.addEventListener(
       }
     };
 
+
+    /** @type {{ setup: Setup; draw: Draw }} */
+    const { setup, draw } = await import(src);
+
+    setup(canvas, audioAPI, { frameRate });
+
+
     while (true) {
-      if (draw(canvas, audioAPI) === 0) break;
+      if (draw() === 0) break;
 
       frames.push(canvas.transferToImageBitmap());
 

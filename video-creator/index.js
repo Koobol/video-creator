@@ -58,7 +58,7 @@ class VideoCreator extends HTMLElement {
       (shadow.querySelector("canvas"));
 
     this.#ctx = /** @type CanvasRenderingContext2D */
-      (this.#preview.getContext("2d"));
+      (this.#preview.getContext("2d", { alpha: false }));
 
     if (this.width)
       this.#preview.width = this.width;
