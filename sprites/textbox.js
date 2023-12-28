@@ -37,13 +37,15 @@ export default class TextBox extends Sprite {
     ctx.font = "20px monospace";
     
     ctx.fillText(
-      this.#displaying.slice(0, this.#displayProgress),
+      this.#displaying.slice(0, Math.floor(this.#displayProgress)),
       -this.width / 2 + 5,
       -this.height / 2 + 5,
     );
 
     debugger;
-    if (this.#displayProgress < this.#displaying.length) this.#displayProgress++;
+    if (this.#displayProgress < this.#displaying.length) {
+      this.#displayProgress += Sprite.deltaTime * this.displayRate;
+    }
     else if (this.#onDone !== null) {
       this.#onDone();
       this.#onDone = null;
@@ -58,11 +60,15 @@ export default class TextBox extends Sprite {
   #displaying = "";
   /** the progress towards displaying #displaying */
   #displayProgress = 0;
+  /** how many characters are displayed a second */
+  displayRate = 30;
+
   /**
    * the function to resolve the promise given by {@linkcode display}
    * @type {Function?}
    */
   #onDone = null;
+
   /**
    * write the given text to the text box
    * @param {string} text

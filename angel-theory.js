@@ -11,7 +11,7 @@ let done = 0;
 
 
 /** @type Setup */
-export function setup(canvas) {
+export function setup(canvas, {}, { frameRate }) {
   Sprite.ctx = /** @type OffscreenCanvasRenderingContext2D */
     (canvas.getContext("2d"));
   Sprite.ctx.fillStyle = "white";
@@ -19,6 +19,10 @@ export function setup(canvas) {
 
   textBox = new TextBox(canvas.width / 2, canvas.height / 2, 250, 150);
   textBox.display("Hello World", () => { done = 1; });
+  textBox.xVelocity = 120;
+
+
+  Sprite.deltaTime = 1 / frameRate;
 }
 
 /** @type Draw */

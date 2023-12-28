@@ -19,8 +19,8 @@ export default class Sprite {
 
   /** how the sprite's physics should be calculated */
   calculate() {
-    this.x += this.xVelocity;
-    this.y += this.yVelocity;
+    this.x += this.xVelocity * Sprite.deltaTime;
+    this.y += this.yVelocity * Sprite.deltaTime;
   }
   /** how to draw the sprite to the canvas, should be overridden */
   draw() { Sprite.ctx.fillRect(this.x - 5, this.y - 5, 10, 10); }
@@ -47,4 +47,7 @@ export default class Sprite {
    * @type Sprite[]
    */
   static sprites = [];
+
+
+  static deltaTime = 0;
 }

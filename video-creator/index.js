@@ -18,7 +18,7 @@ class VideoCreator extends HTMLElement {
 
       <div>
         <button id="download" disabled>Download</button>
-        <progress></progress>
+        <progress hidden></progress>
       </div>
     `;
     
@@ -274,7 +274,7 @@ class VideoCreator extends HTMLElement {
     this.#download.disabled = true;
 
 
-    this.#progress.style.display = "unset";
+    this.#progress.hidden = false;
     this.#progress.max = this.#frames.length / this.frameRate * 1000;
     this.#progress.value = 0;
 
@@ -342,7 +342,7 @@ class VideoCreator extends HTMLElement {
     URL.revokeObjectURL(a.href);
 
 
-    this.#progress.removeAttribute("style");
+    this.#progress.hidden = true;
   }
 }
 
