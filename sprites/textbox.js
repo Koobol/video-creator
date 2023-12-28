@@ -37,18 +37,35 @@ export default class TextBox extends Sprite {
     ctx.font = "20px monospace";
     
     ctx.fillText(
-      this.#displaying.slice(0, Math.floor(this.#displayProgress)),
+      this.#displaying.slice(0, this.#displayProgress),
       -this.width / 2 + 5,
       -this.height / 2 + 5,
     );
 
     debugger;
-    if (this.#displayProgress < this.#displaying.length) {
-      this.#displayProgress += Sprite.deltaTime * this.displayRate;
-    }
-    else if (this.#onDone !== null) {
-      this.#onDone();
-      this.#onDone = null;
+    if (this.#onDone !== null) increment: {
+      if (this.#displayProgress >= this.#displaying.length) {
+        this.#onDone();
+        this.#onDone = null;
+
+        break increment;
+      }
+
+
+      for (
+        let incrementing = this.#leftoverDisplayProgress
+          + this.displayRate * Sprite.deltaTime;
+        incrementing >= 1;
+        incrementing--
+      ) {
+        this.#displayProgress += this.#displaying
+          .slice(this.#displayProgress).search(/\S/) + 1;
+      }
+
+      this.#leftoverDisplayProgress = (
+        this.#leftoverDisplayProgress +
+        this.displayRate * Sprite.deltaTime
+      ) % 1;
     }
 
 
@@ -60,6 +77,7 @@ export default class TextBox extends Sprite {
   #displaying = "";
   /** the progress towards displaying #displaying */
   #displayProgress = 0;
+  #leftoverDisplayProgress = 0;
   /** how many characters are displayed a second */
   displayRate = 30;
 
