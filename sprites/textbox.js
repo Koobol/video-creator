@@ -6,16 +6,27 @@ export default class TextBox extends Sprite {
   /**
    * @param {number} x
    * @param {number} y
-   * @param {number} width
-   * @param {number} height
+   * @param {number} width - the width in characters
+   * @param {number} height - the height in lines
    */
   constructor(x, y, width, height) {
     super(x, y);
 
 
-    this.width = width;
-    this.height = height;
+    this.height = height * this.fontSize + this.gap * 2;
+
+    const ctx = Sprite.ctx;
+    ctx.save();
+
+    ctx.font = `${this.fontSize}px monospace`;
+    this.width = width * ctx.measureText(" ").width + this.gap * 2;
+
+    ctx.restore();
   }
+
+  fontSize = 20;
+
+  gap = 10;
 
 
   draw() {
@@ -27,22 +38,29 @@ export default class TextBox extends Sprite {
     ctx.translate(this.x, this.y);
 
 
+    ctx.fillStyle = "black";
     ctx.strokeStyle = "white";
     ctx.lineWidth = 3;
 
-    ctx.strokeRect(-this.width / 2, -this.height / 2, this.width, this.height);
+    ctx.beginPath();
+    ctx.rect(-this.width / 2, -this.height / 2, this.width, this.height);
+    ctx.fill();
+    ctx.stroke();
 
 
     ctx.textBaseline = "top";
-    ctx.font = "20px monospace";
-    
-    ctx.fillText(
-      this.#displaying.slice(0, this.#displayProgress),
-      -this.width / 2 + 5,
-      -this.height / 2 + 5,
-    );
+    ctx.font = `${this.fontSize}px monospace`;
+    ctx.fillStyle = "white";
 
-    debugger;
+    this.#displaying.slice(0, this.#displayProgress).split("\n")
+      .forEach((line, lineNumber) => {
+        ctx.fillText(
+          line,
+          -this.width / 2 + this.gap,
+          -this.height / 2 + this.gap + lineNumber * this.fontSize,
+        );
+      });
+
     if (this.#onDone !== null) increment: {
       if (this.#displayProgress >= this.#displaying.length) {
         this.#onDone();

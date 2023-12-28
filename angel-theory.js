@@ -17,9 +17,11 @@ export function setup(canvas, {}, { frameRate }) {
   Sprite.ctx.fillStyle = "white";
 
 
-  textBox = new TextBox(canvas.width / 2, canvas.height / 2, 250, 150);
-  textBox.display("Hello World", () => { done = 1; });
-  textBox.xVelocity = 120;
+  textBox = new TextBox(canvas.width / 2, canvas.height / 2, 20, 4);
+  textBox.display(
+    "Hello World\nNice To Meet You\nNice To Meet You Too\nYou're Very Polite",
+    () => { done = 1; },
+  );
 
 
   Sprite.deltaTime = 1 / frameRate;
