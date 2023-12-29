@@ -7,17 +7,25 @@ let canvas;
 /** @type number */
 let frameRate;
 
-/** @type AudioAPI["playSound"] */
+/** @type FileAPI["playSound"] */
 let playSound;
 
 
-/** @type Setup */
-export function setup(inputCanvas, audioAPI, setupInit) {
+/** @type ImageBitmap */
+let puppyImg;
+const scale = 0.2;
+
+
+/** @type AsyncSetup */
+export async function setup(inputCanvas, fileAPI, setupInit) {
   canvas = inputCanvas;
   ctx = /** @type OffscreenCanvasRenderingContext2D */
     (canvas.getContext("2d", { alpha: false, }));
 
-  ({ playSound } = audioAPI);
+  ({ playSound } = fileAPI);
+
+
+  puppyImg = await fileAPI.getImage("puppy.jpg");
 
 
   ({ frameRate } = setupInit);
@@ -36,6 +44,9 @@ export function draw() {
 
     color = `#${Math.floor(Math.random() * 0x1000000).toString(16)}`;
   }
+
+
+  ctx.drawImage(puppyImg, 0, 0, 474 * scale, 355 * scale);
 
 
   ctx.fillStyle = color;

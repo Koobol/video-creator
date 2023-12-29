@@ -350,7 +350,6 @@ class VideoCreator extends HTMLElement {
 customElements.define("video-creator", VideoCreator);
 
 
-
 /**
  * @param {EventTarget} target
  * @param {string} event

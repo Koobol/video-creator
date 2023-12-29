@@ -12,15 +12,39 @@
  *   - keys are audio file being used, values are the sounds being played
  *
  *
- * @typedef {(canvas: OffscreenCanvas, audioAPI: AudioAPI, setupInit: SetupInit) => void} Setup
+ * @callback Setup
+ * @param {OffscreenCanvas} canvas
+ * @param {FileAPI} fileAPI
+ * @param {SetupInit} setupInit
+ * @returns {void}
+ *
+ * @callback AsyncSetup
+ * @param {OffscreenCanvas} canvas
+ * @param {FileAPI} fileAPI
+ * @param {SetupInit} setupInit
+ * @returns {Promise<void>}
+ *
  * @typedef SetupInit
  * @prop {number} frameRate - the frame rate of the video
  *
- * @typedef {() => void | 0} Draw
- *
- * @typedef AudioAPI
+ * @typedef FileAPI
  * @prop {PlaySound} playSound
- * @typedef {(source: string) => AudioInstruction} PlaySound
+ * @prop {GetImage} getImage
+ *
+ * @callback PlaySound
+ * @param {string} src - the file containing the sound
+ * @returns {AudioInstruction}
+ *
+ * @callback GetImage
+ * @param {string} src - the file containing the ImageBitmap
+ * @returns {Promise<ImageBitmap>}
+ *
+ *
+ * @callback Draw
+ * @returns {void | 0}
+ * 
+ * @callback AsyncDraw
+ * @returns {Promise<void | 0>}
  *
  *
  * @typedef AudioInstruction
@@ -42,33 +66,45 @@ self.addEventListener(
 
     /** @type RenderOutput["audioInstructions"]*/
     const audioInstructions = new Map();
-    const audioAPI = {
-      /** @type PlaySound */
-      playSound(source) {
+    /** @type FileAPI */
+    const fileAPI = {
+      playSound(src) {
         const instruction = {
           timestamp: frame / frameRate,
         };
 
 
-        if (!audioInstructions.has(source))
-        audioInstructions.set(source, new Set());
-        audioInstructions.get(source)?.add(instruction);
+        if (!audioInstructions.has(src))
+        audioInstructions.set(src, new Set());
+        audioInstructions.get(src)?.add(instruction);
 
 
 
         return instruction;
-      }
+      },
+
+
+      async getImage(imgSrc) {
+        return createImageBitmap(await (await fetch(
+          imgSrc[0] === "/" || /^[a-z]+:\/\//i.test(imgSrc) ? imgSrc
+            : src.match(/.*\//) + imgSrc,
+        )).blob());
+      },
     };
 
 
-    /** @type {{ setup: Setup; draw: Draw }} */
+    /**
+     * @type {{
+     *   setup: Setup | AsyncSetup;
+     *   draw: Draw | AsyncDraw;
+     * }} */
     const { setup, draw } = await import(src);
 
-    setup(canvas, audioAPI, { frameRate });
+    await setup(canvas, fileAPI, { frameRate });
 
 
     while (true) {
-      if (draw() === 0) break;
+      if (await draw() === 0) break;
 
       frames.push(canvas.transferToImageBitmap());
 
