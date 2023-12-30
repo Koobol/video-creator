@@ -8,36 +8,24 @@
  *
  * @typedef RenderOutput
  * @prop {ImageBitmap[]} frames - the frames of video
- * @prop {Map<string, Set<AudioInstruction>>} audioInstructions
+ * @prop {AudioInstructions} audioInstructions
  *   - keys are audio file being used, values are the sounds being played
  *
  *
  * @callback Setup
  * @param {OffscreenCanvas} canvas
- * @param {FileAPI} fileAPI
+ * @param {MediaAPI} mediaAPI
  * @param {SetupInit} setupInit
  * @returns {void}
  *
  * @callback AsyncSetup
  * @param {OffscreenCanvas} canvas
- * @param {FileAPI} fileAPI
+ * @param {MediaAPI} mediaAPI
  * @param {SetupInit} setupInit
  * @returns {Promise<void>}
  *
  * @typedef SetupInit
  * @prop {number} frameRate - the frame rate of the video
- *
- * @typedef FileAPI
- * @prop {PlaySound} playSound
- * @prop {GetImage} getImage
- *
- * @callback PlaySound
- * @param {string} src - the file containing the sound
- * @returns {AudioInstruction}
- *
- * @callback GetImage
- * @param {string} src - the file containing the ImageBitmap
- * @returns {Promise<ImageBitmap>}
  *
  *
  * @callback Draw
@@ -49,7 +37,72 @@
  *
  * @typedef AudioInstruction
  * @prop {number} timestamp - the time that the sound starts playing in seconds
+ *
+ * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
  */
+
+
+class MediaAPI {
+  #src;
+
+  #frameRate;
+
+  #shared;
+  /**
+   * @param {string} src - the URL to the file using the API
+   * @param {number} frameRate
+   * @param {{
+   *   audioInstructions: AudioInstructions;
+   *   frame: number;
+   * }} shared
+   *   
+   */
+  constructor(src, frameRate, shared) {
+    this.#src = src;
+    
+    this.#frameRate = frameRate;
+
+    
+    this.#shared = shared;
+
+
+    this.playSound = this.playSound.bind(this);
+    this.getImage = this.getImage.bind(this);
+  }
+
+
+  /**
+   * play the requested sound
+   * @param {string} src - the file containing the sound
+   * @returns {AudioInstruction}
+   */
+  playSound(src) {
+    const instruction = {
+      timestamp: this.#shared.frame / this.#frameRate,
+    };
+
+
+    if (!this.#shared.audioInstructions.has(src))
+      this.#shared.audioInstructions.set(src, new Set());
+    this.#shared.audioInstructions.get(src)?.add(instruction);
+
+
+
+    return instruction;
+  }
+
+  /**
+   * get an ImageBitmap containing the data from the requested file
+   * @param {string} src - the file containing the image
+   * @returns {Promise<ImageBitmap>}
+   */
+  async getImage(src) {
+    return createImageBitmap(await (await fetch(
+      src[0] === "/" || /^[a-z]+:\/\//i.test(src) ? src
+        : this.#src.match(/.*\//) + src,
+    )).blob());
+  }
+}
 
 
 self.addEventListener(
@@ -59,37 +112,15 @@ self.addEventListener(
     const canvas = new OffscreenCanvas(width, height);
 
 
-    let frame = 0;
-
     /** @type RenderOutput["frames"] */
     const frames = [];
 
-    /** @type RenderOutput["audioInstructions"]*/
+
+    /** @type AudioInstructions */
     const audioInstructions = new Map();
-    /** @type FileAPI */
-    const fileAPI = {
-      playSound(src) {
-        const instruction = {
-          timestamp: frame / frameRate,
-        };
-
-
-        if (!audioInstructions.has(src))
-        audioInstructions.set(src, new Set());
-        audioInstructions.get(src)?.add(instruction);
-
-
-
-        return instruction;
-      },
-
-
-      async getImage(imgSrc) {
-        return createImageBitmap(await (await fetch(
-          imgSrc[0] === "/" || /^[a-z]+:\/\//i.test(imgSrc) ? imgSrc
-            : src.match(/.*\//) + imgSrc,
-        )).blob());
-      },
+    const shared = {
+      audioInstructions,
+      frame: 0,
     };
 
 
@@ -97,10 +128,11 @@ self.addEventListener(
      * @type {{
      *   setup: Setup | AsyncSetup;
      *   draw: Draw | AsyncDraw;
-     * }} */
+     * }}
+     */
     const { setup, draw } = await import(src);
 
-    await setup(canvas, fileAPI, { frameRate });
+    await setup(canvas, new MediaAPI(src, frameRate, shared), { frameRate });
 
 
     while (true) {
@@ -108,11 +140,12 @@ self.addEventListener(
 
       frames.push(canvas.transferToImageBitmap());
 
-      frame++;
+
+      shared.frame++;
     }
 
 
-    postMessage(/** @type RenderOutput */ ({
+    postMessage(/** @satisfies {RenderOutput} */ ({
       frames,
       audioInstructions,
     }), { transfer: frames });

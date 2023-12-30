@@ -7,7 +7,7 @@ let canvas;
 /** @type number */
 let frameRate;
 
-/** @type FileAPI["playSound"] */
+/** @type MediaAPI["playSound"] */
 let playSound;
 
 
@@ -17,15 +17,15 @@ const scale = 0.2;
 
 
 /** @type AsyncSetup */
-export async function setup(inputCanvas, fileAPI, setupInit) {
+export async function setup(inputCanvas, mediaAPI, setupInit) {
   canvas = inputCanvas;
   ctx = /** @type OffscreenCanvasRenderingContext2D */
     (canvas.getContext("2d", { alpha: false, }));
 
-  ({ playSound } = fileAPI);
+  ({ playSound } = mediaAPI);
 
 
-  puppyImg = await fileAPI.getImage("puppy.jpg");
+  puppyImg = await mediaAPI.getImage("puppy.jpg");
 
 
   ({ frameRate } = setupInit);
