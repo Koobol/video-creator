@@ -84,10 +84,56 @@ class VideoCreator extends HTMLElement {
       frameRate: this.frameRate,
     }));
 
+
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<RenderOutput>} event */
-      async ({ data: { frames, audioInstructions } }) => {
+      /** @param {MessageEvent<RenderMessage>} event */
+      async ({ data }) => {
+        if (data.type !== "video request") return;
+
+
+        const { src } = data;
+
+
+        const video = document.createElement("video");
+        video.src = src;
+
+        await waitForEvent(video, "loadedmetadata");
+
+
+        /** @type ImageBitmap[] */
+        const frames = [];
+
+        while (true) {
+          console.log(video.currentTime);
+
+
+          try { frames.push(await createImageBitmap(video)); }
+          catch {
+            await waitForEvent(video, "canplaythrough");
+
+            frames.push(await createImageBitmap(video)); 
+          }
+
+
+          if (video.currentTime >= video.duration) break;
+
+          video.currentTime += 1 / this.frameRate;
+        }
+      }
+    );
+
+
+    worker.addEventListener(
+      "message",
+      /** @param {MessageEvent<RenderMessage>} event */
+      async ({ data }) => {
+        if (data.type !== "output") return;
+
+        
+        const { frames, audioInstructions } = data;
+
+
         this.#frames = frames;
 
 

@@ -29,6 +29,9 @@ export async function setup(inputCanvas, mediaAPI, setupInit) {
 
 
   ({ frameRate } = setupInit);
+
+
+  mediaAPI.getVideo("video.webm");
 }
 
 

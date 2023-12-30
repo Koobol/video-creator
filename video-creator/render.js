@@ -7,6 +7,7 @@
  * @prop {number} frameRate - the framerate of the video
  *
  * @typedef RenderOutput
+ * @prop {"output"} type
  * @prop {ImageBitmap[]} frames - the frames of video
  * @prop {AudioInstructions} audioInstructions
  *   - keys are audio file being used, values are the sounds being played
@@ -39,6 +40,14 @@
  * @prop {number} timestamp - the time that the sound starts playing in seconds
  *
  * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
+ *
+ *
+ * @typedef VideoRequest
+ * @prop {"video request"} type
+ * @prop {string} src
+ *
+ *
+ * @typedef {RenderOutput | VideoRequest} RenderMessage
  */
 
 
@@ -102,6 +111,18 @@ class MediaAPI {
         : this.#src.match(/.*\//) + src,
     )).blob());
   }
+
+
+  /**
+   * get an ImageBitmap containing the data from the requested file
+   * @param {string} src - the file containing the image
+   */
+  getVideo(src) {
+    postMessage(/** @satisfies {VideoRequest} */ ({
+      type: "video request",
+      src,
+    }));
+  }
 }
 
 
@@ -146,6 +167,7 @@ self.addEventListener(
 
 
     postMessage(/** @satisfies {RenderOutput} */ ({
+      type: "output",
       frames,
       audioInstructions,
     }), { transfer: frames });
