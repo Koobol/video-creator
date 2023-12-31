@@ -46,6 +46,11 @@
  * @prop {"video request"} type
  * @prop {string} src
  *
+ * @typedef VideoResponse
+ * @prop {"video response"} type
+ * @prop {string} src
+ * @prop {ImageBitmap[]} frames
+ *
  *
  * @typedef {RenderOutput | VideoRequest} RenderMessage
  */
@@ -117,59 +122,78 @@ class MediaAPI {
    * get an ImageBitmap containing the data from the requested file
    * @param {string} src - the file containing the image
    */
-  getVideo(src) {
+  async getVideo(src) {
     postMessage(/** @satisfies {VideoRequest} */ ({
       type: "video request",
       src,
     }));
+
+
+    const { frames } = await this.#getVideoResponse(src);
+  }
+  /**
+   * @param {string} src
+   * @returns {Promise<VideoResponse>}
+   */
+  #getVideoResponse(src) {
+    return new Promise(resolve => {
+      self.addEventListener(
+        "message",
+        /** @param {MessageEvent<VideoResponse>} event */
+        ({ data }) => {
+          if (data.type === "video response" && data.src === src) resolve(data);
+        },
+      );
+    });
   }
 }
 
 
-self.addEventListener(
-  "message",
-  /** @param {MessageEvent<RenderInit>} event */
-  async ({ data: { width, height, frameRate, src } }) => {
-    const canvas = new OffscreenCanvas(width, height);
+/** @param {MessageEvent<RenderInit>} event */
+const init = async ({ data: { width, height, frameRate, src } }) => {
+  self.removeEventListener("message", init);
 
 
-    /** @type RenderOutput["frames"] */
-    const frames = [];
+  const canvas = new OffscreenCanvas(width, height);
 
 
-    /** @type AudioInstructions */
-    const audioInstructions = new Map();
-    const shared = {
-      audioInstructions,
-      frame: 0,
-    };
+  /** @type RenderOutput["frames"] */
+  const frames = [];
 
 
-    /**
-     * @type {{
-     *   setup: Setup | AsyncSetup;
-     *   draw: Draw | AsyncDraw;
-     * }}
-     */
-    const { setup, draw } = await import(src);
-
-    await setup(canvas, new MediaAPI(src, frameRate, shared), { frameRate });
+  /** @type AudioInstructions */
+  const audioInstructions = new Map();
+  const shared = {
+    audioInstructions,
+    frame: 0,
+  };
 
 
-    while (true) {
-      if (await draw() === 0) break;
+  /**
+   * @type {{
+   *   setup: Setup | AsyncSetup;
+   *   draw: Draw | AsyncDraw;
+   * }}
+   */
+  const { setup, draw } = await import(src);
 
-      frames.push(canvas.transferToImageBitmap());
+  await setup(canvas, new MediaAPI(src, frameRate, shared), { frameRate });
 
 
-      shared.frame++;
-    }
+  while (true) {
+    if (await draw() === 0) break;
+
+    frames.push(canvas.transferToImageBitmap());
 
 
-    postMessage(/** @satisfies {RenderOutput} */ ({
-      type: "output",
-      frames,
-      audioInstructions,
-    }), { transfer: frames });
-  },
-);
+    shared.frame++;
+  }
+
+
+  postMessage(/** @satisfies {RenderOutput} */ ({
+    type: "output",
+    frames,
+    audioInstructions,
+  }), { transfer: frames });
+};
+self.addEventListener("message", init);

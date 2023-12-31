@@ -120,6 +120,16 @@ class VideoCreator extends HTMLElement {
 
           video.currentTime += 1 / this.frameRate;
         }
+
+
+        worker.postMessage(
+          /** @satisfies {VideoResponse} */ ({
+            type: "video response",
+            src,
+            frames,
+          }),
+          { transfer: frames },
+        );
       }
     );
 
