@@ -92,14 +92,21 @@ class VideoCreator extends HTMLElement {
         if (data.type !== "video request") return;
 
 
-        const { src } = data;
+        const { src, start = 0 } = data;
 
 
         const video = document.createElement("video");
         video.src = src;
 
+
         await waitForEvent(video, "loadedmetadata");
 
+        if (start) video.currentTime = start;
+
+        const { end = video.duration } = data;
+
+
+        await waitForEvent(video, "canplaythrough");
 
         /** @type ImageBitmap[] */
         const frames = [];
@@ -108,17 +115,14 @@ class VideoCreator extends HTMLElement {
           console.log(video.currentTime);
 
 
-          try { frames.push(await createImageBitmap(video)); }
-          catch {
-            await waitForEvent(video, "canplaythrough");
+          if (video.readyState < 2) await waitForEvent(video, "canplaythrough");
 
-            frames.push(await createImageBitmap(video)); 
-          }
+          frames.push(await createImageBitmap(video));
 
 
-          if (video.currentTime >= video.duration) break;
+          if (video.currentTime >= end) break;
 
-          video.currentTime += 1 / this.frameRate;
+          video.currentTime = 1 / this.frameRate * frames.length + start;
         }
 
 

@@ -45,6 +45,8 @@
  * @typedef VideoRequest
  * @prop {"video request"} type
  * @prop {string} src
+ * @prop {number} [start] - where to start the video
+ * @prop {number} [end] - where to end the video
  *
  * @typedef VideoResponse
  * @prop {"video response"} type
@@ -121,15 +123,20 @@ class MediaAPI {
   /**
    * get an ImageBitmap containing the data from the requested file
    * @param {string} src - the file containing the image
+   * @param {number} [start] - the timestamp the video starts on
+   * @param {number} [end] - the timestamp the video ends on
    */
-  async getVideo(src) {
+  async getVideo(src, start, end) {
     postMessage(/** @satisfies {VideoRequest} */ ({
       type: "video request",
       src,
+      start,
+      end,
     }));
 
 
     const { frames } = await this.#getVideoResponse(src);
+    debugger;
   }
   /**
    * @param {string} src
