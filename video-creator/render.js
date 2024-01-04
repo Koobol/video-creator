@@ -144,13 +144,16 @@ class MediaAPI {
    */
   #getVideoResponse(src) {
     return new Promise(resolve => {
-      self.addEventListener(
-        "message",
-        /** @param {MessageEvent<VideoResponse>} event */
-        ({ data }) => {
-          if (data.type === "video response" && data.src === src) resolve(data);
-        },
-      );
+      /** @param {MessageEvent<VideoResponse>} event */
+      const resolution = ({ data }) => {
+        if (data.type === "video response" && data.src === src) {
+          resolve(data);
+
+
+          self.removeEventListener("message", resolution);
+        }
+      };
+      self.addEventListener("message", resolution);
     });
   }
 }

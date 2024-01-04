@@ -101,6 +101,7 @@ class VideoCreator extends HTMLElement {
 
         await waitForEvent(video, "loadedmetadata");
 
+
         if (start) video.currentTime = start;
 
         const { end = video.duration } = data;
@@ -108,13 +109,11 @@ class VideoCreator extends HTMLElement {
 
         await waitForEvent(video, "canplaythrough");
 
+
         /** @type ImageBitmap[] */
         const frames = [];
 
         while (true) {
-          console.log(video.currentTime);
-
-
           if (video.readyState < 2) await waitForEvent(video, "canplaythrough");
 
           frames.push(await createImageBitmap(video));
@@ -412,9 +411,19 @@ customElements.define("video-creator", VideoCreator);
 
 /**
  * @param {EventTarget} target
- * @param {string} event
+ * @param {string} eventName
  * @returns {Promise<Event>}
  */
-function waitForEvent(target, event) {
-  return new Promise(resolve => { target.addEventListener(event, resolve); });
+function waitForEvent(target, eventName) {
+  /** @param {(value: Event) => void} resolve */
+  return new Promise(resolve => {
+    /** @param {Event} event */
+    const resolution = event => {
+      resolve(event);
+
+
+      target.removeEventListener(eventName, resolution);
+    }
+    target.addEventListener(eventName, resolution);
+  });
 }
