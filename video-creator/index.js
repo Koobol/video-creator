@@ -405,7 +405,6 @@ class VideoCreator extends HTMLElement {
   }
 }
 
-
 customElements.define("video-creator", VideoCreator);
 
 

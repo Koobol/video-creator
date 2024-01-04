@@ -15,13 +15,13 @@
  *
  * @callback Setup
  * @param {OffscreenCanvas} canvas
- * @param {MediaAPI} mediaAPI
+ * @param {typeof mediaAPI} mediaAPI
  * @param {SetupInit} setupInit
  * @returns {void}
  *
  * @callback AsyncSetup
  * @param {OffscreenCanvas} canvas
- * @param {MediaAPI} mediaAPI
+ * @param {typeof mediaAPI} mediaAPI
  * @param {SetupInit} setupInit
  * @returns {Promise<void>}
  *
@@ -58,35 +58,19 @@
  */
 
 
-class MediaAPI {
-  #src;
+/** @type string */
+let src;
 
-  #frameRate;
+/** @type number */
+let frameRate;
 
-  #shared;
-  /**
-   * @param {string} src - the URL to the file using the API
-   * @param {number} frameRate
-   * @param {{
-   *   audioInstructions: AudioInstructions;
-   *   frame: number;
-   * }} shared
-   *   
-   */
-  constructor(src, frameRate, shared) {
-    this.#src = src;
-    
-    this.#frameRate = frameRate;
+/** @type AudioInstructions */
+const audioInstructions = new Map();
 
-    
-    this.#shared = shared;
+let frame = 0;
 
 
-    this.playSound = this.playSound.bind(this);
-    this.getImage = this.getImage.bind(this);
-  }
-
-
+const mediaAPI = {
   /**
    * play the requested sound
    * @param {string} src - the file containing the sound
@@ -94,30 +78,31 @@ class MediaAPI {
    */
   playSound(src) {
     const instruction = {
-      timestamp: this.#shared.frame / this.#frameRate,
+      timestamp: frame / frameRate,
     };
 
 
-    if (!this.#shared.audioInstructions.has(src))
-      this.#shared.audioInstructions.set(src, new Set());
-    this.#shared.audioInstructions.get(src)?.add(instruction);
+    if (!audioInstructions.has(src))
+    audioInstructions.set(src, new Set());
+    audioInstructions.get(src)?.add(instruction);
 
 
 
     return instruction;
-  }
+  },
+
 
   /**
    * get an ImageBitmap containing the data from the requested file
-   * @param {string} src - the file containing the image
+   * @param {string} imageSrc - the file containing the image
    * @returns {Promise<ImageBitmap>}
    */
-  async getImage(src) {
+  async getImage(imageSrc) {
     return createImageBitmap(await (await fetch(
-      src[0] === "/" || /^[a-z]+:\/\//i.test(src) ? src
-        : this.#src.match(/.*\//) + src,
+      imageSrc[0] === "/" || /^[a-z]+:\/\//i.test(imageSrc) ? imageSrc
+        : src.match(/.*\//) + imageSrc,
     )).blob());
-  }
+  },
 
 
   /**
@@ -135,48 +120,39 @@ class MediaAPI {
     }));
 
 
-    const { frames } = await this.#getVideoResponse(src);
+    const frames = await /** @type Promise<ImageBitmap[]> */ (new Promise(
+        resolve => {
+        /** @param {MessageEvent<VideoResponse>} event */
+        const resolution = ({ data: { type, src: videoSrc, frames } }) => {
+          if (type === "video response" && videoSrc === src) {
+            resolve(frames);
+
+
+            self.removeEventListener("message", resolution);
+          }
+        };
+        self.addEventListener("message", resolution);
+      })
+    );
+
     debugger;
-  }
-  /**
-   * @param {string} src
-   * @returns {Promise<VideoResponse>}
-   */
-  #getVideoResponse(src) {
-    return new Promise(resolve => {
-      /** @param {MessageEvent<VideoResponse>} event */
-      const resolution = ({ data }) => {
-        if (data.type === "video response" && data.src === src) {
-          resolve(data);
-
-
-          self.removeEventListener("message", resolution);
-        }
-      };
-      self.addEventListener("message", resolution);
-    });
-  }
-}
+  },
+};
 
 
 /** @param {MessageEvent<RenderInit>} event */
-const init = async ({ data: { width, height, frameRate, src } }) => {
+const init = async ({ data }) => {
   self.removeEventListener("message", init);
 
 
-  const canvas = new OffscreenCanvas(width, height);
+  const canvas = new OffscreenCanvas(data.width, data.height);
+
+
+  ({ src, frameRate } = data);
 
 
   /** @type RenderOutput["frames"] */
   const frames = [];
-
-
-  /** @type AudioInstructions */
-  const audioInstructions = new Map();
-  const shared = {
-    audioInstructions,
-    frame: 0,
-  };
 
 
   /**
@@ -187,7 +163,7 @@ const init = async ({ data: { width, height, frameRate, src } }) => {
    */
   const { setup, draw } = await import(src);
 
-  await setup(canvas, new MediaAPI(src, frameRate, shared), { frameRate });
+  await setup(canvas, mediaAPI, { frameRate });
 
 
   while (true) {
@@ -196,7 +172,7 @@ const init = async ({ data: { width, height, frameRate, src } }) => {
     frames.push(canvas.transferToImageBitmap());
 
 
-    shared.frame++;
+    frame++;
   }
 
 

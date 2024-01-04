@@ -7,7 +7,7 @@ let canvas;
 /** @type number */
 let frameRate;
 
-/** @type MediaAPI["playSound"] */
+/** @type typeof mediaAPI["playSound"] */
 let playSound;
 
 
@@ -31,7 +31,7 @@ export async function setup(inputCanvas, mediaAPI, setupInit) {
   ({ frameRate } = setupInit);
 
 
-  mediaAPI.getVideo("video.webm", 1, 2);
+  await mediaAPI.getVideo("video.webm", 1, 2);
 }
 
 
