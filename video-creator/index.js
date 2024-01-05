@@ -161,14 +161,22 @@ class VideoCreator extends HTMLElement {
         const promises = [];
         for (const [fileName, instructions] of audioInstructions) {
           promises.push((async () => {
-            const buffer = await audioCtx.decodeAudioData(
+            const fullBuffer = await audioCtx.decodeAudioData(
               await (await fetch(fileName)).arrayBuffer(),
             );
 
             for (const instruction of instructions) {
-              const bufferSrc = new AudioBufferSourceNode(audioCtx, { buffer });
+              const buffer = !instruction.startAt ? fullBuffer
+                : clipAudioBuffer(fullBuffer, instruction.startAt);
+
+
+              let bufferSrc = new AudioBufferSourceNode(audioCtx, { buffer });
               bufferSrc.connect(audioCtx.destination);
+
+
               bufferSrc.start(instruction.timestamp);
+              if (instruction.stop !== undefined)
+                bufferSrc.stop(instruction.stop);
             }
           })());
         }
@@ -269,18 +277,10 @@ class VideoCreator extends HTMLElement {
     if (this.#audioCtx.state === "suspended")
       this.#audioCtx.resume();
 
-    const offset =
-      Math.floor(this.frame / this.frameRate * this.#audio.sampleRate);
-    const buffer = this.#audioCtx.createBuffer(
-      this.#audio.numberOfChannels,
-      this.#audio.length - offset,
-      this.#audio.sampleRate,
+    const buffer = clipAudioBuffer(
+      this.#audio,
+      this.frame / this.frameRate,
     );
-    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-      const data = new Float32Array(this.#audio.length - offset);
-      this.#audio.copyFromChannel(data, channel, offset);
-      buffer.copyToChannel(data, channel);
-    }
 
     this.#playing = new AudioBufferSourceNode(this.#audioCtx, { buffer });
     this.#playing.connect(this.#audioCtx.destination);
@@ -425,4 +425,28 @@ function waitForEvent(target, eventName) {
     }
     target.addEventListener(eventName, resolution);
   });
+}
+
+
+/**
+ * @param {AudioBuffer} buffer
+ * @param {number} start - when to clip off the start, in seconds
+ */
+function clipAudioBuffer(buffer, start) {
+  const startPos = start * buffer.sampleRate;
+
+  const newBuffer = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels,
+    length: buffer.length - startPos,
+    sampleRate: buffer.sampleRate,
+  });
+
+  for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+    const data = new Float32Array(buffer.length - startPos);
+    buffer.copyFromChannel(data, channel, startPos);
+    newBuffer.copyToChannel(data, channel);
+  }
+
+
+  return newBuffer;
 }

@@ -38,6 +38,8 @@
  *
  * @typedef AudioInstruction
  * @prop {number} timestamp - the time that the sound starts playing in seconds
+ * @prop {number} [stop] - the timestamp when to stop the sound
+ * @prop {number} [startAt] - when to start playing the sound from
  *
  * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
  *
@@ -74,11 +76,14 @@ const mediaAPI = {
   /**
    * play the requested sound
    * @param {string} src - the file containing the sound
+   * @param {number} [startAt] - when to start playing the sound from
    * @returns {AudioInstruction}
    */
-  playSound(src) {
+  playSound(src, startAt) {
+    /** @satisfies {AudioInstruction} */
     const instruction = {
       timestamp: frame / frameRate,
+      startAt,
     };
 
 
@@ -87,8 +92,15 @@ const mediaAPI = {
     audioInstructions.get(src)?.add(instruction);
 
 
-
     return instruction;
+  },
+
+  /**
+   * pause the given sound
+   * @param {AudioInstruction} sound
+   */
+  stopSound(sound) {
+    sound.stop = frame / frameRate;
   },
 
 
@@ -121,7 +133,7 @@ const mediaAPI = {
 
 
     const frames = await /** @type Promise<ImageBitmap[]> */ (new Promise(
-        resolve => {
+      resolve => {
         /** @param {MessageEvent<VideoResponse>} event */
         const resolution = ({ data: { type, src: videoSrc, frames } }) => {
           if (type === "video response" && videoSrc === src) {
@@ -132,12 +144,80 @@ const mediaAPI = {
           }
         };
         self.addEventListener("message", resolution);
-      })
-    );
+      }
+    ));
 
-    debugger;
+
+    return new Video(frames, src, start);
   },
 };
+
+class Video {
+  /** @type ImageBitmap[] */
+  #frames;
+  #frame = 0;
+
+  #src;
+  /** @type AudioInstruction? */
+  #audio = null;
+  
+  #startAt;
+
+  /**
+   * @param {ImageBitmap[]} frames
+   * @param {string} src
+   *   - the source of the video's audio, usually the video file
+   * @param {number} [startAt]
+   *   - how offset the video is from its audio, in seconds
+   */
+  constructor(frames, src, startAt = 0) {
+    this.#frames = frames;
+
+
+    this.#src = src;
+
+    this.#startAt = startAt;
+
+
+    Video.videos.push(this);
+  }
+
+
+  get frame() { return this.#frame; }
+  set frame(value) {
+    this.#frame = Math.min(value, this.#frames.length - 1);
+
+
+    if (this.#frame < this.#frames.length - 1) return;
+    this.playing = false;
+  }
+
+  get playing() { return Boolean(this.#audio); }
+  set playing(play) {
+    if (play === Boolean(this.#audio)) return;
+
+
+    if (!this.#audio) {
+      this.#audio = mediaAPI.playSound(this.#src, this.#startAt + this.frame / frameRate);
+      return;
+    }
+
+
+    mediaAPI.stopSound(this.#audio);
+    this.#audio = null;
+  }
+
+
+  /** the current frame of video */
+  get currentFrame() { return this.#frames[this.#frame]; }
+
+  get width() { return this.#frames[0].width; }
+  get height() { return this.#frames[0].height; }
+
+
+  /** @type Video[] */
+  static videos = [];
+}
 
 
 /** @param {MessageEvent<RenderInit>} event */
@@ -173,6 +253,9 @@ const init = async ({ data }) => {
 
 
     frame++;
+
+    for (const video of Video.videos.filter(video => video.playing))
+      video.frame++;
   }
 
 

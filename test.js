@@ -16,6 +16,12 @@ let puppyImg;
 const scale = 0.2;
 
 
+/** @type Video */
+let video;
+
+const videoScale = 0.3;
+
+
 /** @type AsyncSetup */
 export async function setup(inputCanvas, mediaAPI, setupInit) {
   canvas = inputCanvas;
@@ -31,7 +37,8 @@ export async function setup(inputCanvas, mediaAPI, setupInit) {
   ({ frameRate } = setupInit);
 
 
-  await mediaAPI.getVideo("video.webm", 1, 2);
+  video = await mediaAPI.getVideo("video.webm", 1.4, 3);
+  video.playing = true;
 }
 
 
@@ -50,6 +57,14 @@ export function draw() {
 
 
   ctx.drawImage(puppyImg, 0, 0, 474 * scale, 355 * scale);
+
+  ctx.drawImage(
+    video.currentFrame,
+    canvas.width - video.width * videoScale,
+    0,
+    video.width * videoScale,
+    video.height * videoScale,
+  );
 
 
   ctx.fillStyle = color;
