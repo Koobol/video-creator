@@ -84,10 +84,69 @@ class VideoCreator extends HTMLElement {
       frameRate: this.frameRate,
     }));
 
+
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<RenderOutput>} event */
-      async ({ data: { frames, audioInstructions } }) => {
+      /** @param {MessageEvent<RenderMessage>} event */
+      async ({ data }) => {
+        if (data.type !== "video request") return;
+
+
+        const { src, start = 0 } = data;
+
+
+        const video = document.createElement("video");
+        video.src = src;
+
+
+        await waitForEvent(video, "loadedmetadata");
+
+
+        if (start) video.currentTime = start;
+
+        const { end = video.duration } = data;
+
+
+        await waitForEvent(video, "canplaythrough");
+
+
+        /** @type ImageBitmap[] */
+        const frames = [];
+
+        while (true) {
+          if (video.readyState < 2) await waitForEvent(video, "canplaythrough");
+
+          frames.push(await createImageBitmap(video));
+
+
+          if (video.currentTime >= end) break;
+
+          video.currentTime = 1 / this.frameRate * frames.length + start;
+        }
+
+
+        worker.postMessage(
+          /** @satisfies {VideoResponse} */ ({
+            type: "video response",
+            src,
+            frames,
+          }),
+          { transfer: frames },
+        );
+      }
+    );
+
+
+    worker.addEventListener(
+      "message",
+      /** @param {MessageEvent<RenderMessage>} event */
+      async ({ data }) => {
+        if (data.type !== "output") return;
+
+        
+        const { frames, audioInstructions } = data;
+
+
         this.#frames = frames;
 
 
@@ -102,14 +161,22 @@ class VideoCreator extends HTMLElement {
         const promises = [];
         for (const [fileName, instructions] of audioInstructions) {
           promises.push((async () => {
-            const buffer = await audioCtx.decodeAudioData(
+            const fullBuffer = await audioCtx.decodeAudioData(
               await (await fetch(fileName)).arrayBuffer(),
             );
 
             for (const instruction of instructions) {
-              const bufferSrc = new AudioBufferSourceNode(audioCtx, { buffer });
+              const buffer = !instruction.startAt ? fullBuffer
+                : clipAudioBuffer(fullBuffer, instruction.startAt);
+
+
+              let bufferSrc = new AudioBufferSourceNode(audioCtx, { buffer });
               bufferSrc.connect(audioCtx.destination);
+
+
               bufferSrc.start(instruction.timestamp);
+              if (instruction.stop !== undefined)
+                bufferSrc.stop(instruction.stop);
             }
           })());
         }
@@ -210,18 +277,10 @@ class VideoCreator extends HTMLElement {
     if (this.#audioCtx.state === "suspended")
       this.#audioCtx.resume();
 
-    const offset =
-      Math.floor(this.frame / this.frameRate * this.#audio.sampleRate);
-    const buffer = this.#audioCtx.createBuffer(
-      this.#audio.numberOfChannels,
-      this.#audio.length - offset,
-      this.#audio.sampleRate,
+    const buffer = clipAudioBuffer(
+      this.#audio,
+      this.frame / this.frameRate,
     );
-    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-      const data = new Float32Array(this.#audio.length - offset);
-      this.#audio.copyFromChannel(data, channel, offset);
-      buffer.copyToChannel(data, channel);
-    }
 
     this.#playing = new AudioBufferSourceNode(this.#audioCtx, { buffer });
     this.#playing.connect(this.#audioCtx.destination);
@@ -346,15 +405,48 @@ class VideoCreator extends HTMLElement {
   }
 }
 
-
 customElements.define("video-creator", VideoCreator);
 
 
 /**
  * @param {EventTarget} target
- * @param {string} event
+ * @param {string} eventName
  * @returns {Promise<Event>}
  */
-function waitForEvent(target, event) {
-  return new Promise(resolve => { target.addEventListener(event, resolve); });
+function waitForEvent(target, eventName) {
+  /** @param {(value: Event) => void} resolve */
+  return new Promise(resolve => {
+    /** @param {Event} event */
+    const resolution = event => {
+      resolve(event);
+
+
+      target.removeEventListener(eventName, resolution);
+    }
+    target.addEventListener(eventName, resolution);
+  });
+}
+
+
+/**
+ * @param {AudioBuffer} buffer
+ * @param {number} start - when to clip off the start, in seconds
+ */
+function clipAudioBuffer(buffer, start) {
+  const startPos = start * buffer.sampleRate;
+
+  const newBuffer = new AudioBuffer({
+    numberOfChannels: buffer.numberOfChannels,
+    length: buffer.length - startPos,
+    sampleRate: buffer.sampleRate,
+  });
+
+  for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+    const data = new Float32Array(buffer.length - startPos);
+    buffer.copyFromChannel(data, channel, startPos);
+    newBuffer.copyToChannel(data, channel);
+  }
+
+
+  return newBuffer;
 }

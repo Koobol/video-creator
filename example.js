@@ -1,6 +1,18 @@
 // @ts-check
 import Sprite from "./sprites/sprite.js";
 import TextBox from "./sprites/textbox.js";
+/** @type OffscreenCanvasRenderingContext2D */
+let ctx;
+/** @type OffscreenCanvas */
+let canvas;
+
+/** @type number */
+let frameRate;
+
+/** @type typeof mediaAPI["playSound"] */
+let playSound;
+
+
 /** @type TextBox */
 let textBox;
 
