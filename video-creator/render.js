@@ -198,7 +198,10 @@ class Video {
 
 
     if (!this.#audio) {
-      this.#audio = mediaAPI.playSound(this.#src, this.#startAt + this.frame / frameRate);
+      this.#audio = mediaAPI.playSound(
+        this.#src,
+        this.#startAt + this.frame / frameRate,
+      );
       return;
     }
 
