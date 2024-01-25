@@ -12,29 +12,6 @@
  *   - keys are audio file being used, values are the sounds being played
  *
  *
- * @callback Setup
- * @param {OffscreenCanvas} canvas
- * @param {typeof mediaAPI} mediaAPI
- * @param {SetupInit} setupInit
- * @returns {void}
- *
- * @callback AsyncSetup
- * @param {OffscreenCanvas} canvas
- * @param {typeof mediaAPI} mediaAPI
- * @param {SetupInit} setupInit
- * @returns {Promise<void>}
- *
- * @typedef SetupInit
- * @prop {number} frameRate - the frame rate of the video
- *
- *
- * @callback Draw
- * @returns {void | 0}
- * 
- * @callback AsyncDraw
- * @returns {Promise<void | 0>}
- *
- *
  * @typedef AudioInstruction
  * @prop {number} timestamp - the time that the sound starts playing in seconds
  * @prop {number} [stop] - the timestamp when to stop the sound
@@ -236,10 +213,7 @@ const init = async ({ data }) => {
 
 
   /**
-   * @type {{
-   *   setup: Setup | AsyncSetup;
-   *   draw: Draw | AsyncDraw;
-   * }}
+   * @type {import("./index").SrcExports}
    */
   const { setup, draw } = await import(/* webpackIgnore: true */ src.pathname);
 

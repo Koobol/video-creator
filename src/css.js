@@ -1,4 +1,5 @@
-export default `*, ::before, ::after {
+export default `
+*, ::before, ::after {
   box-sizing: border-box;
 }
 
@@ -61,4 +62,5 @@ div {
   grid-area: download;
 
   > progress { display: none; }
-}`;
+}
+`;
