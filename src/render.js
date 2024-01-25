@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * @typedef RenderInit
  * @prop {number} width - the width of the video
@@ -60,13 +59,13 @@
  */
 
 
-/** @type string */
+/** @type {URL} */
 let src;
 
-/** @type number */
+/** @type {number} */
 let frameRate;
 
-/** @type AudioInstructions */
+/** @type {AudioInstructions} */
 const audioInstructions = new Map();
 
 let frame = 0;
@@ -110,10 +109,7 @@ const mediaAPI = {
    * @returns {Promise<ImageBitmap>}
    */
   async getImage(imageSrc) {
-    return createImageBitmap(await (await fetch(
-      imageSrc[0] === "/" || /^[a-z]+:\/\//i.test(imageSrc) ? imageSrc
-        : src.match(/.*\//) + imageSrc,
-    )).blob());
+    return createImageBitmap(await (await fetch(new URL(imageSrc, src))).blob());
   },
 
 
@@ -132,7 +128,7 @@ const mediaAPI = {
     }));
 
 
-    const frames = await /** @type Promise<ImageBitmap[]> */ (new Promise(
+    const frames = await /** @type {Promise<ImageBitmap[]>} */ (new Promise(
       resolve => {
         /** @param {MessageEvent<VideoResponse>} event */
         const resolution = ({ data: { type, src: videoSrc, frames } }) => {
@@ -153,12 +149,12 @@ const mediaAPI = {
 };
 
 class Video {
-  /** @type ImageBitmap[] */
+  /** @type {ImageBitmap[]} */
   #frames;
   #frame = 0;
 
   #src;
-  /** @type AudioInstruction? */
+  /** @type {AudioInstruction?} */
   #audio = null;
   
   #startAt;
@@ -218,7 +214,7 @@ class Video {
   get height() { return this.#frames[0].height; }
 
 
-  /** @type Video[] */
+  /** @type {Video[]} */
   static videos = [];
 }
 
@@ -231,10 +227,11 @@ const init = async ({ data }) => {
   const canvas = new OffscreenCanvas(data.width, data.height);
 
 
-  ({ src, frameRate } = data);
+  ({ frameRate } = data);
+  src = new URL(data.src);
 
 
-  /** @type RenderOutput["frames"] */
+  /** @type {RenderOutput["frames"]} */
   const frames = [];
 
 
@@ -244,7 +241,7 @@ const init = async ({ data }) => {
    *   draw: Draw | AsyncDraw;
    * }}
    */
-  const { setup, draw } = await import(src);
+  const { setup, draw } = await import(/* webpackIgnore: true */ src.pathname);
 
   await setup(canvas, mediaAPI, { frameRate });
 

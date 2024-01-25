@@ -7,7 +7,7 @@
 self.addEventListener(
   "message",
   /**
-   * @param {MessageEvent<paintInit>}
+   * @param {MessageEvent<paintInit>} event
    */
   ({ data: { frames, offscreen, frameRate }}) => {
     const interval = 1 / frameRate * 1000;

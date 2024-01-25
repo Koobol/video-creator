@@ -1,10 +1,11 @@
-// @ts-check
-class VideoCreator extends HTMLElement {
+import css from "./css.js";
+
+export default class VideoCreator extends HTMLElement {
   static shadow;
   static {
     const template = document.createElement("template");
     template.innerHTML = `
-      <link rel="stylesheet" href="video-creator/index.css">
+      <style>${css}</style>
 
       <canvas></canvas>
       <button
@@ -41,9 +42,9 @@ class VideoCreator extends HTMLElement {
   #playing = null;
 
 
-  /** @type ImageBitmap[] */
+  /** @type {ImageBitmap[]} */
   #frames;
-  /** @type AudioBuffer */
+  /** @type {AudioBuffer} */
   #audio;
 
   constructor() {
@@ -57,7 +58,7 @@ class VideoCreator extends HTMLElement {
     this.#preview = /** @type {HTMLCanvasElement} */
       (shadow.querySelector("canvas"));
 
-    this.#ctx = /** @type CanvasRenderingContext2D */
+    this.#ctx = /** @type {CanvasRenderingContext2D} */
       (this.#preview.getContext("2d", { alpha: false }));
 
     if (this.width)
@@ -66,21 +67,20 @@ class VideoCreator extends HTMLElement {
       this.#preview.height = this.height;
 
 
-    this.#play = /** @type HTMLButtonElement */ (shadow.querySelector("#play"));
-    this.#search = /** @type HTMLInputElement */ (shadow.querySelector("input"));
+    this.#play = /** @type {HTMLButtonElement} */ (shadow.querySelector("#play"));
+    this.#search = /** @type {HTMLInputElement} */ (shadow.querySelector("input"));
 
-    this.#download = /** @type HTMLButtonElement */
+    this.#download = /** @type {HTMLButtonElement} */
       (shadow.querySelector("#download"));
-    this.#progress = /** @type HTMLProgressElement */
+    this.#progress = /** @type {HTMLProgressElement} */
       (shadow.querySelector("progress"));
 
 
-    const worker = new Worker("video-creator/render.js", { type: "module" });
+    const worker = new Worker(new URL("render.js", import.meta.url), { type: "module" });
     worker.postMessage(/** @satisfies {RenderInit} */ ({
       width: this.#preview.width,
       height: this.#preview.height,
-      src: this.src[0] === "/" || /^[a-z]+:\/\//i.test(this.src) ? this.src
-        : location.pathname.match(/.*\//) + this.src,
+      src: new URL(this.src, location.href).href,
       frameRate: this.frameRate,
     }));
 
@@ -110,7 +110,7 @@ class VideoCreator extends HTMLElement {
         await waitForEvent(video, "canplaythrough");
 
 
-        /** @type ImageBitmap[] */
+        /** @type {ImageBitmap[]} */
         const frames = [];
 
         while (true) {
@@ -157,7 +157,7 @@ class VideoCreator extends HTMLElement {
           44100,
         );
 
-        /** @type Promise<void>[]*/
+        /** @type {Promise<void>[]} */
         const promises = [];
         for (const [fileName, instructions] of audioInstructions) {
           promises.push((async () => {
@@ -227,7 +227,7 @@ class VideoCreator extends HTMLElement {
   }
 
 
-  /** @type number= */
+  /** @type {number=} */
   #playTimeout;
   /**
    * start playing the preview
@@ -338,9 +338,10 @@ class VideoCreator extends HTMLElement {
     this.#progress.value = 0;
 
 
-    const paint = new Worker("video-creator/paint.js", { type: "module" });
+    const paint = new Worker(new URL("paint.js", import.meta.url), { type: "module" });
 
     const canvas = document.createElement("canvas");
+    document.body.appendChild(canvas);
     canvas.width = this.width;
     canvas.height = this.height;
 
@@ -360,9 +361,10 @@ class VideoCreator extends HTMLElement {
       ...dest.stream.getTracks(),
     ]));
 
-    /** @type Blob[] */
+    /** @type {Blob[]} */
     const chunks = [];
     recorder.addEventListener("dataavailable", ({ data }) => {
+      console.log(data);
       chunks.push(data);
     });
 
@@ -393,6 +395,7 @@ class VideoCreator extends HTMLElement {
     await waitForEvent(recorder, "stop");
 
 
+    debugger;
     const a = document.createElement("a");
     a.download = "video";
     a.href = URL.createObjectURL(new Blob(chunks));
@@ -404,8 +407,6 @@ class VideoCreator extends HTMLElement {
     this.#progress.removeAttribute("style");
   }
 }
-
-customElements.define("video-creator", VideoCreator);
 
 
 /**
