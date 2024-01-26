@@ -3,14 +3,18 @@
   "version": "1.0.0",
   "description": "A web application for creating videos using Javascript.",
   "main": "src/index.js",
-  "types": "dist/index.d.ts",
+  "types": "types/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Koobol/video-creator"
+  },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Koobol",
+  "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
     "typescript": "^5.3.3"
   }

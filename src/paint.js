@@ -1,13 +1,19 @@
 /**
- * @typedef paintInit
+ * @exports
+ * @typedef PaintInit
  * @prop {ImageBitmap[]} frames
  * @prop {OffscreenCanvas} offscreen
  * @prop {number} frameRate
  */
+
+
+export {};
+
+
 self.addEventListener(
   "message",
   /**
-   * @param {MessageEvent<paintInit>} event
+   * @param {MessageEvent<PaintInit>} event
    */
   ({ data: { frames, offscreen, frameRate }}) => {
     const interval = 1 / frameRate * 1000;

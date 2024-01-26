@@ -5,14 +5,14 @@ import css from "./css.js";
  * @exports
  * @callback Setup
  * @param {OffscreenCanvas} canvas
- * @param {typeof mediaAPI} mediaAPI
+ * @param {MediaAPI} mediaAPI
  * @param {SetupInit} setupInit
  * @returns {void}
  *
  * @exports
  * @callback AsyncSetup
  * @param {OffscreenCanvas} canvas
- * @param {typeof mediaAPI} mediaAPI
+ * @param {MediaAPI} mediaAPI
  * @param {SetupInit} setupInit
  * @returns {Promise<void>}
  *
@@ -36,7 +36,11 @@ import css from "./css.js";
  * 
  * 
  * @exports
- * @typedef {typeof mediaAPI} MediaAPI
+ * @typedef {import("./render").MediaAPI} MediaAPI
+ * 
+ * 
+ * @exports
+ * @typedef {import("./render").Video} Video
  */
 
 
@@ -117,7 +121,7 @@ export default class VideoCreator extends HTMLElement {
 
 
     const worker = new Worker(new URL("render.js", import.meta.url), { type: "module" });
-    worker.postMessage(/** @satisfies {RenderInit} */ ({
+    worker.postMessage(/** @satisfies {import("./render").RenderInit} */ ({
       width: this.#preview.width,
       height: this.#preview.height,
       src: new URL(this.src, location.href).href,
@@ -127,7 +131,7 @@ export default class VideoCreator extends HTMLElement {
 
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<RenderMessage>} event */
+      /** @param {MessageEvent<import("./render").RenderMessage>} event */
       async ({ data }) => {
         if (data.type !== "video request") return;
 
@@ -166,7 +170,7 @@ export default class VideoCreator extends HTMLElement {
 
 
         worker.postMessage(
-          /** @satisfies {VideoResponse} */ ({
+          /** @satisfies {import("./render").VideoResponse} */ ({
             type: "video response",
             src,
             frames,
@@ -179,7 +183,7 @@ export default class VideoCreator extends HTMLElement {
 
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<RenderMessage>} event */
+      /** @param {MessageEvent<import("./render").RenderMessage>} event */
       async ({ data }) => {
         if (data.type !== "output") return;
 
@@ -381,7 +385,6 @@ export default class VideoCreator extends HTMLElement {
     const paint = new Worker(new URL("paint.js", import.meta.url), { type: "module" });
 
     const canvas = document.createElement("canvas");
-    document.body.appendChild(canvas);
     canvas.width = this.width;
     canvas.height = this.height;
 
@@ -410,7 +413,7 @@ export default class VideoCreator extends HTMLElement {
 
 
     recorder.start();
-    paint.postMessage(/** @satisfies {paintInit} */ ({
+    paint.postMessage(/** @satisfies {import("./paint").PaintInit} */ ({
       frames: this.#frames,
       offscreen,
       frameRate: this.frameRate,

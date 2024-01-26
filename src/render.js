@@ -1,4 +1,5 @@
 /**
+ * @exports
  * @typedef RenderInit
  * @prop {number} width - the width of the video
  * @prop {number} height - the height of the video
@@ -26,14 +27,23 @@
  * @prop {number} [start] - where to start the video
  * @prop {number} [end] - where to end the video
  *
+ * @exports
  * @typedef VideoResponse
  * @prop {"video response"} type
  * @prop {string} src
  * @prop {ImageBitmap[]} frames
  *
  *
+ * @exports
  * @typedef {RenderOutput | VideoRequest} RenderMessage
+ * 
+ * 
+ * @exports
+ * @typedef {typeof mediaAPI} MediaAPI
  */
+
+
+export {};
 
 
 /** @type {URL} */
@@ -95,6 +105,7 @@ const mediaAPI = {
    * @param {string} src - the file containing the image
    * @param {number} [start] - the timestamp the video starts on
    * @param {number} [end] - the timestamp the video ends on
+   * @returns {Promise<Video>}
    */
   async getVideo(src, start, end) {
     postMessage(/** @satisfies {VideoRequest} */ ({
@@ -125,7 +136,8 @@ const mediaAPI = {
   },
 };
 
-class Video {
+
+export class Video {
   /** @type {ImageBitmap[]} */
   #frames;
   #frame = 0;
