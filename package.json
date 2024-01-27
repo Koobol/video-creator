@@ -1,7 +1,7 @@
 {
   "name": "video-creator",
   "version": "1.0.0",
-  "description": "A web application for creating videos using Javascript.",
+  "description": "An npm package for creating videos using Javascript.",
   "main": "src/index.js",
   "types": "types/index.d.ts",
   "scripts": {
@@ -12,7 +12,7 @@
     "type": "git",
     "url": "https://github.com/Koobol/video-creator"
   },
-  "keywords": [],
+  "keywords": ["front-end"],
   "author": "Koobol",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
