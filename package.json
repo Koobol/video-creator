@@ -2,8 +2,16 @@
   "name": "video-creator",
   "version": "1.0.1",
   "description": "An npm package for creating videos using Javascript.",
-  "main": "src/index.js",
-  "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./types/index.d.ts"
+    },
+    "./src": {
+      "import": "./src/src.js",
+      "types": "./types/src.d.ts"
+    }
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rm -rf types && tsc"

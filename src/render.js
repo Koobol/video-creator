@@ -224,16 +224,24 @@ const init = async ({ data }) => {
   const frames = [];
 
 
-  /**
-   * @type {import("./index").SrcExports}
-   */
-  const { setup, draw } = await import(/* webpackIgnore: true */ src.pathname);
+  await import(/* webpackIgnore: true */ src.pathname);
 
-  await setup(canvas, mediaAPI, { frameRate });
+
+  if (globalThis.VideoSrc === undefined) throw new Error("no VideoSrc being used");
+
+  const videoSrc = new /** @type {typeof import("./src").default} */
+    (globalThis.VideoSrc)({
+      canvas,
+      mediaAPI,
+      frameRate,
+    });
+
+
+  await videoSrc.setup();
 
 
   while (true) {
-    if (await draw() === 0) break;
+    if (await videoSrc.draw() === 0) break;
 
     frames.push(canvas.transferToImageBitmap());
 
