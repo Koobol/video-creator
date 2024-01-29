@@ -10,9 +10,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Koobol/video-creator"
+    "url": "git+https://github.com/Koobol/video-creator.git"
   },
-  "keywords": ["front-end"],
+  "keywords": [
+    "front-end"
+  ],
   "author": "Koobol",
   "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
