@@ -30,6 +30,8 @@ export default class VideoSrc {
 
 
   /**
+   * function that will be called every frame
+   * @abstract
    * @returns {void | 0 | Promise<void | 0>}
    */
   draw() {
@@ -38,5 +40,7 @@ export default class VideoSrc {
 
 
   /** use to define the class as the one to be used as the video */
-  static use() { globalThis.VideoSrc = this; }
+  static render() {
+
+  }
 }

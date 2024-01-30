@@ -120,7 +120,30 @@ export default class VideoCreator extends HTMLElement {
       (shadow.querySelector("progress"));
 
 
-    const worker = new Worker(new URL("render.js", import.meta.url), { type: "module" });
+    if (this.src === "") return;
+    
+    this.render(new Worker(new URL(this.src, location.href)));
+  }
+
+
+  /** whether or not {@linkcode render} has been called yet */
+  #rendered = false;
+  /**
+   * render the video with the given worker
+   * @param {Worker} worker
+   */
+  render(worker) {
+    if (!this.#rendered) {
+      if (this.src === "")
+        throw new Error("VideoCreator#render can only be called once");
+      throw new Error(
+        "VideoCreator#render can only be called if the VideoCreator has no src",
+      );
+    }
+    this.#rendered = true;
+
+
+
     worker.postMessage(/** @satisfies {import("./render").RenderInit} */ ({
       width: this.#preview.width,
       height: this.#preview.height,
