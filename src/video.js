@@ -4,7 +4,7 @@ export default class Video {
   #frame = 0;
 
   #src;
-  /** @type {import("./render").AudioInstruction?} */
+  /** @type {symbol?} */
   #audio = null;
   
   #startAt;

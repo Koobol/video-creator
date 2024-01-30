@@ -79,7 +79,10 @@ export default class VideoCreator extends HTMLElement {
 
     if (this.src === "") return;
     
-    this.render(new Worker(new URL(this.src, location.href)));
+    this.render(new Worker(
+      new URL(this.src, location.href),
+      { type: "module" },
+    ));
   }
 
 
@@ -90,7 +93,7 @@ export default class VideoCreator extends HTMLElement {
    * @param {Worker} worker
    */
   render(worker) {
-    if (!this.#rendered) {
+    if (this.#rendered) {
       if (this.src === "")
         throw new Error("VideoCreator#render can only be called once");
       throw new Error(
@@ -361,7 +364,10 @@ export default class VideoCreator extends HTMLElement {
     this.#progress.value = 0;
 
 
-    const paint = new Worker(new URL("paint.js", import.meta.url), { type: "module" });
+    const paint = new Worker(
+      new URL("paint.js", import.meta.url),
+      { type: "module" },
+    );
 
     const canvas = document.createElement("canvas");
     canvas.width = this.width;

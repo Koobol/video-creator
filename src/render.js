@@ -33,11 +33,12 @@ export default class VideoSrc {
     )).blob());
   }
 
+
   /**
    * play the requested sound
-   * @param {string} src - the file containing the sound
+   * @param {string | URL} src - the file containing the sound
    * @param {number} [startAt] - when to start playing the sound from
-   * @returns {AudioInstruction}
+   * @returns {symbol} - a key which can be used to manipulate the sound
    */
   playSound(src, startAt) {
     /** @satisfies {AudioInstruction} */
@@ -47,32 +48,45 @@ export default class VideoSrc {
     };
 
 
+    if (src instanceof URL) src = src.href;
+
+
     if (!this.#audioInstructions.has(src))
       this.#audioInstructions.set(src, new Set());
     this.#audioInstructions.get(src)?.add(instruction);
 
 
-    return instruction;
+    const key = Symbol(src);
+    this.#sounds.set(key, instruction);
+
+    return key;
   }
   /** @type {AudioInstructions} */
   #audioInstructions = new Map();
 
   /**
    * pause the given sound
-   * @param {AudioInstruction} sound
+   * @param {symbol} sound
    */
   stopSound(sound) {
-    sound.stop = this.frame / this.#frameRate;
+    this.#sounds.get(sound).stop = this.frame / this.frameRate;
   }
+
+  /** @type {Map<symbol, AudioInstruction>} */
+  #sounds = new Map();
+
 
   /**
    * get an ImageBitmap containing the data from the requested file
-   * @param {string} src - the file containing the image
+   * @param {string | URL} src - the file containing the image
    * @param {number} [start] - the timestamp the video starts on
    * @param {number} [end] - the timestamp the video ends on
    * @returns {Promise<Video>}
    */
   async getVideo(src, start, end) {
+    if (src instanceof URL) src = src.href;
+
+
     postMessage(/** @satisfies {VideoRequest} */ ({
       type: "video request",
       src,
