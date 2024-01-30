@@ -1,49 +1,6 @@
 import css from "./css.js";
 
 
-/**
- * @exports
- * @callback Setup
- * @param {OffscreenCanvas} canvas
- * @param {MediaAPI} mediaAPI
- * @param {SetupInit} setupInit
- * @returns {void}
- *
- * @exports
- * @callback AsyncSetup
- * @param {OffscreenCanvas} canvas
- * @param {MediaAPI} mediaAPI
- * @param {SetupInit} setupInit
- * @returns {Promise<void>}
- *
- * @typedef SetupInit
- * @prop {number} frameRate - the frame rate of the video
- *
- *
- * @exports
- * @callback Draw
- * @returns {void | 0}
- * 
- * @exports
- * @callback AsyncDraw
- * @returns {Promise<void | 0>}
- * 
- * 
- * @typedef {{
- *  setup: Setup | AsyncSetup
- *  draw: Draw | AsyncDraw
- * }} SrcExports
- * 
- * 
- * @exports
- * @typedef {import("./render").MediaAPI} MediaAPI
- * 
- * 
- * @exports
- * @typedef {import("./render").Video} Video
- */
-
-
 export default class VideoCreator extends HTMLElement {
   static shadow;
   static {
@@ -144,17 +101,16 @@ export default class VideoCreator extends HTMLElement {
 
 
 
-    worker.postMessage(/** @satisfies {import("./render").RenderInit} */ ({
+    worker.postMessage(/** @satisfies {import("./src.js").RenderInit} */ ({
       width: this.#preview.width,
       height: this.#preview.height,
-      src: new URL(this.src, location.href).href,
       frameRate: this.frameRate,
     }));
 
 
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<import("./render").RenderMessage>} event */
+      /** @param {MessageEvent<import("./src.js").RenderMessage>} event */
       async ({ data }) => {
         if (data.type !== "video request") return;
 
@@ -193,7 +149,7 @@ export default class VideoCreator extends HTMLElement {
 
 
         worker.postMessage(
-          /** @satisfies {import("./render").VideoResponse} */ ({
+          /** @satisfies {import("./src.js").VideoResponse} */ ({
             type: "video response",
             src,
             frames,
@@ -206,7 +162,7 @@ export default class VideoCreator extends HTMLElement {
 
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<import("./render").RenderMessage>} event */
+      /** @param {MessageEvent<import("./src.js").RenderMessage>} event */
       async ({ data }) => {
         if (data.type !== "output") return;
 
