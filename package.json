@@ -7,9 +7,9 @@
       "import": "./src/index.js",
       "types": "./types/index.d.ts"
     },
-    "./src": {
-      "import": "./src/src.js",
-      "types": "./types/src.d.ts"
+    "./render": {
+      "import": "./src/render.js",
+      "types": "./types/render.d.ts"
     }
   },
   "scripts": {

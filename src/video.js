@@ -4,25 +4,31 @@ export default class Video {
   #frame = 0;
 
   #src;
-  /** @type {AudioInstruction?} */
+  /** @type {import("./render").AudioInstruction?} */
   #audio = null;
   
   #startAt;
+
+  #videoSrc;
 
   /**
    * @param {ImageBitmap[]} frames
    * @param {string} src
    *   - the source of the video's audio, usually the video file
+   * @param {import("./render").default} videoSrc
    * @param {number} [startAt]
    *   - how offset the video is from its audio, in seconds
    */
-  constructor(frames, src, startAt = 0) {
+  constructor(frames, src, videoSrc, startAt = 0) {
     this.#frames = frames;
 
 
     this.#src = src;
 
     this.#startAt = startAt;
+
+
+    this.#videoSrc = videoSrc;
 
 
     Video.videos.push(this);
@@ -35,26 +41,26 @@ export default class Video {
 
 
     if (this.#frame < this.#frames.length - 1) return;
-    // this.playing = false;
+    this.playing = false;
   }
 
   get playing() { return Boolean(this.#audio); }
-  // set playing(play) {
-  //   if (play === Boolean(this.#audio)) return;
+  set playing(play) {
+    if (play === Boolean(this.#audio)) return;
 
 
-  //   if (!this.#audio) {
-  //     this.#audio = mediaAPI.playSound(
-  //       this.#src,
-  //       this.#startAt + this.frame / frameRate,
-  //     );
-  //     return;
-  //   }
+    if (!this.#audio) {
+      this.#audio = this.#videoSrc.playSound(
+        this.#src,
+        this.#startAt + this.frame / this.#videoSrc.frameRate,
+      );
+      return;
+    }
 
 
-  //   mediaAPI.stopSound(this.#audio);
-  //   this.#audio = null;
-  // }
+    this.#videoSrc.stopSound(this.#audio);
+    this.#audio = null;
+  }
 
 
   /** the current frame of video */

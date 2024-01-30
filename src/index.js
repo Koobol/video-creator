@@ -101,7 +101,7 @@ export default class VideoCreator extends HTMLElement {
 
 
 
-    worker.postMessage(/** @satisfies {import("./src.js").RenderInit} */ ({
+    worker.postMessage(/** @satisfies {import("./render").RenderInit} */ ({
       width: this.#preview.width,
       height: this.#preview.height,
       frameRate: this.frameRate,
@@ -110,7 +110,7 @@ export default class VideoCreator extends HTMLElement {
 
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<import("./src.js").RenderMessage>} event */
+      /** @param {MessageEvent<import("./render").RenderMessage>} event */
       async ({ data }) => {
         if (data.type !== "video request") return;
 
@@ -149,7 +149,7 @@ export default class VideoCreator extends HTMLElement {
 
 
         worker.postMessage(
-          /** @satisfies {import("./src.js").VideoResponse} */ ({
+          /** @satisfies {import("./render").VideoResponse} */ ({
             type: "video response",
             src,
             frames,
@@ -162,7 +162,7 @@ export default class VideoCreator extends HTMLElement {
 
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<import("./src.js").RenderMessage>} event */
+      /** @param {MessageEvent<import("./render").RenderMessage>} event */
       async ({ data }) => {
         if (data.type !== "output") return;
 

@@ -3,12 +3,8 @@ import Video from "./video.js";
 
 export default class VideoSrc {
   /**
-   * @typedef Init
-   * @prop {OffscreenCanvas} canvas - the canvas to be drawn on
-   * @prop {number} frameRate
-   * 
    * only to be called by video-creator
-   * @param {Init} init
+   * @param {{ canvas: OffscreenCanvas, frameRate: number }} init
    */
   constructor({ canvas, frameRate }) {
     /** the canvas to draw on */
@@ -37,14 +33,6 @@ export default class VideoSrc {
     )).blob());
   }
 
-  /**
-   * @typedef AudioInstruction
-   * @prop {number} timestamp - the time that the sound starts playing in seconds
-   * @prop {number} [stop] - the timestamp when to stop the sound
-   * @prop {number} [startAt] - when to start playing the sound from
-   *
-   * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
-   */
   /**
    * play the requested sound
    * @param {string} src - the file containing the sound
@@ -109,7 +97,7 @@ export default class VideoSrc {
     ));
 
 
-    return new Video(frames, src, start);
+    return new Video(frames, src, this, start);
   }
 
 
@@ -213,4 +201,12 @@ export default class VideoSrc {
  * 
  * 
  * @typedef {RenderOutput | VideoRequest} RenderMessage
+ * 
+ * 
+ * @typedef AudioInstruction
+ * @prop {number} timestamp - the time that the sound starts playing in seconds
+ * @prop {number} [stop] - the timestamp when to stop the sound
+ * @prop {number} [startAt] - when to start playing the sound from
+ *
+ * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
  */
