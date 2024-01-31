@@ -27,22 +27,34 @@ self.addEventListener(
     const interval = 1 / frameRate * 1000;
 
 
-    let last = Date.now() - interval;
+    const start = Date.now();
+
+
+    let last = start - interval;
     let frame = 0;
 
 
     const ctx = offscreen.getContext("bitmaprenderer");
 
 
+    let warned = false;
+
+
     while (true) {
       if (Date.now() - last < interval) continue;
-      last += interval;
+      last = start + frame * interval;
 
 
       ctx.transferFromImageBitmap(frames[frame++]);
       await sleep();
 
-      // console.log(Date.now() - last);
+
+      if (!warned && Date.now() - last > interval) {
+        console.warn("Video file rendering not able to " +
+                     "keep up with requested framerate.");
+
+        warned = true;
+      }
 
 
       if (frame >= frames.length - 1) {
