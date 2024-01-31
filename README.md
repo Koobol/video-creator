@@ -1,18 +1,73 @@
 # Video Creator
 An npm package for creating videos using Javascript.
 
-
-## Goals
-This package is designed as more of an experiment than anything else.
-
-Using it you will be able to write Javascript code to manipulate an `OffScreenCanvas` to generate frames of video similar to how a video game does. You can then preview the video, and if you're satisfied you can hit a button to generate a video file to download.
-
-It will also ideally be able to function on all major browsers.
+Using this package you will be able to create a video similar to how a video game functions, preview the video in the browser, and generate a video file.
 
 
 ## Instructions For Use
-To use, define the `VideoCreator` custom element in the package's default export, then add the element to your page. Create a Javascript file, and give the element the file's name in its `src` attribute. You may also define `width`, `height`, and `framerate` attributes. Inside your Javascript file export `setup` and `draw` functions, conforming to the package's exported `Setup`/`AsyncSetup` and `Draw`/`AsyncDraw` types; these functions will be imported by the package with `setup` being called once, and `draw` being called for every frame of video. Draw onto the `OffscreenCanvas` passed to the `setup` function in order to draw frames, and use the `MediaAPI` in order to use retrieve images, play audio, and play video files. Once the video is done, return a value of 0 from the `draw` function. You may then preview the video using the `VideoCreator` element, and if it looks good you may hit the download button to generate a video.
+First, create a new Javascript file. This file will be used to define how the video is rendered. Next, import the default export from `video-creator/render`, which is a class. Extend this class with `setup()` and `draw()` methods. To create visuals draw onto the `OffscreenCanvas` provided by the `canvas` property, using `getImage()` and `getVideo()` to load image and video files. To control audio, use `playSound()` and `stopSound()`. From the draw function, return `true` to finish rendering the video. Finally, call the static method `render()` on your extended class, which will render the video.
 
-Unfortunantely, at this time the download button may or may not work for Chrome, because of the nature of how the video is recorded in order to get it to match the requested framerate.
+To actually view your video, import `video-creator` and define its default export as a custom element. Then put the custom elment on the page, and either give it an `src` attribute with the URL of your file (in which case when using a bundler you will have to specify the file as an entry point), or call the `render()` method on the custom element with a dedicated worker of your file. You may also give your custom element `width`, `height`, and `frameRate` attributes. On the browser your video will then be rendered, and when it is complete you will be able to preview it on the custom element, and when you are satisfied with it you can hit the download button to generate a video file.
 
-For use with a bundler, you will need to specify your src file as an entry point, and webpack will need `output.libraryTarget: "module"` so that your file's exports won't be taken out. Other bundlers may need other configuration settings in order to preserve the export calls.
+### Example
+example.js
+```
+import VideoSrc from "video-creator/render";
+
+(class extends VideoSrc {
+  setup() {
+    this.ctx = this.canvas.getContext("2d");
+
+    this.ctx.fillStyle = "blue";
+
+
+    this.rectX = 0;
+  }
+
+  draw() {
+    // 100 pixels per second
+    this.rectX += 100 / this.frameRate;
+
+    if (this.rectX + 100 > this.canvas.width) {
+      return true;
+    }
+
+
+    this.ctx.fillRect(this.rectX, (this.canvas.height - 100) / 2, 100, 100);
+
+    return false;
+  }
+}).render();
+```
+
+index.js
+```
+import VideoCreator from "video-creator";
+
+customElements.define("video-creator", VideoCreator);
+
+
+document.querySelector("video-creator").render(new Worker(
+  new URL("example.js", import.meta.url),
+  { type: "module" },
+));
+```
+
+index.html
+```
+<video-creator
+  width="300"
+  height="200"
+  framerate="30"
+></video-creator>
+```
+
+
+### Notes
+* It can be good for performance to set `alpha: false` on your `ctx`, since all pixels lose their alpha channel in the end anyway.
+* At the moment the `getVideo()` method is very slow, so I would recommend not trying to use clips that very long yet, or waiting until you're done to add them in, and just putting placeholders in during devolpment.
+* Right now the `VideoCreator` class (and to a lesser extent the `VideoSrc` class) aren't very robust and will likely break if you try to do something strange with them, such as changing the `VideoCreator`'s attributes while it's rendering your video. However, as long as you're not trying to do anything too fancy you should be fine.
+
+
+## Advanced
+Technically, there's nothing forcing you to use the `VideoSrc` class, it's just there to make it easier to create your video. If you wanted, you could create your own API that conforms to what the `VideoCreator` is expecting from the worker thread. In fact, if you wanted you could also just use the `VideoSrc` class without the `VideoCreator` and create your own API to process the data from the worker thread. However, the built in APIs should be good enough for most users, and I will be working to improve them over time as well.
