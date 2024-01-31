@@ -10,12 +10,20 @@
 export {};
 
 
+/** @param {number} time */
+const sleep = (time = 0) => {
+  return new Promise(resolve => {
+    setTimeout(resolve, time);
+  });
+};
+
+
 self.addEventListener(
   "message",
   /**
    * @param {MessageEvent<PaintInit>} event
    */
-  ({ data: { frames, offscreen, frameRate }}) => {
+  async ({ data: { frames, offscreen, frameRate }}) => {
     const interval = 1 / frameRate * 1000;
 
 
@@ -32,6 +40,9 @@ self.addEventListener(
 
 
       ctx.transferFromImageBitmap(frames[frame++]);
+      await sleep();
+
+      // console.log(Date.now() - last);
 
 
       if (frame >= frames.length - 1) {

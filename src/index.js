@@ -247,6 +247,9 @@ export default class VideoCreator extends HTMLElement {
 
   get src() { return this.getAttribute("src") ?? ""; }
 
+  /** the mime type of the generated video */
+  get type() { return this.getAttribute("type") ?? "video/webm"; }
+
   get frameRate() {
     const framerateAttr = Number(this.getAttribute("framerate"));
     return framerateAttr >= 0 ? framerateAttr : 60;
@@ -387,12 +390,11 @@ export default class VideoCreator extends HTMLElement {
     const recorder = new MediaRecorder(new MediaStream([
       ...canvas.captureStream().getTracks(),
       ...dest.stream.getTracks(),
-    ]));
+    ]), { mimeType: this.type });
 
     /** @type {Blob[]} */
     const chunks = [];
     recorder.addEventListener("dataavailable", ({ data }) => {
-      console.log(data);
       chunks.push(data);
     });
 
@@ -423,10 +425,9 @@ export default class VideoCreator extends HTMLElement {
     await waitForEvent(recorder, "stop");
 
 
-    debugger;
     const a = document.createElement("a");
     a.download = "video";
-    a.href = URL.createObjectURL(new Blob(chunks));
+    a.href = URL.createObjectURL(new Blob(chunks, { type: this.type }));
     a.click();
 
     URL.revokeObjectURL(a.href);
