@@ -66,7 +66,7 @@ index.html
 ### Notes
 * Unfortunantely, currently the download button only works on Firefox.
 * It can be good for performance to set `alpha: false` on your `ctx`, since all pixels lose their alpha channel in the end anyway.
-* At the moment the `getVideo()` method is very slow, so I would recommend not trying to use clips that very long yet, or waiting until you're done to add them in, and just putting placeholders in during devolpment.
+* At the moment the `getVideo()` method is very slow, so I would recommend not trying to use clips that are very long yet, or waiting until you're done to add them in, and just putting placeholders in during devolpment.
 * Right now the `VideoCreator` class (and to a lesser extent the `VideoSrc` class) aren't very robust and will likely break if you try to do something strange with them, such as changing the `VideoCreator`'s attributes while it's rendering your video. However, as long as you're not trying to do anything too fancy you should be fine.
 
 
