@@ -330,7 +330,7 @@ export default class VideoCreator extends HTMLElement {
     this.#play.ariaChecked = "false";
 
 
-    if (this.#audioCtx) this.#audioCtx.suspend();
+    this.#audioCtx?.suspend();
     this.#playing?.stop();
   }
 
