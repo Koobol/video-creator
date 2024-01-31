@@ -38,7 +38,8 @@ export default class VideoCreator extends HTMLElement {
   #preview;
   #ctx;
 
-  #audioCtx = new AudioContext();
+  /** @type {AudioContext | null} */
+  #audioCtx = null;
   /** @type {AudioBufferSourceNode?} */
   #playing = null;
 
@@ -262,6 +263,9 @@ export default class VideoCreator extends HTMLElement {
    * start playing the preview
    */
   play() {
+    if (this.#audioCtx === null) this.#audioCtx = new AudioContext();
+
+
     if (this.#playTimeout !== undefined) return;
 
 
@@ -326,7 +330,7 @@ export default class VideoCreator extends HTMLElement {
     this.#play.ariaChecked = "false";
 
 
-    this.#audioCtx.suspend();
+    if (this.#audioCtx) this.#audioCtx.suspend();
     this.#playing?.stop();
   }
 
