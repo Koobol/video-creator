@@ -252,7 +252,7 @@ export default class VideoCreator extends HTMLElement {
 
   get frameRate() {
     const framerateAttr = Number(this.getAttribute("framerate"));
-    return framerateAttr >= 0 ? framerateAttr : 60;
+    return framerateAttr >= 0 ? framerateAttr : 30;
   }
 
 
