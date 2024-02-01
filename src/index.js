@@ -484,20 +484,20 @@ export default class VideoCreator extends HTMLElement {
   /**
    * @overload
    * @param {K} type
-   * @param {(event: VideoCreatorEventMap[K]) => void} callback
+   * @param {(this: VideoCreator, event: VideoCreatorEventMap[K]) => void} callback
    * @param {boolean | AddEventListenerOptions} [options]
    * @returns {void}
    *
    * @overload
    * @param {string} type
-   * @param {(event: Event) => void} callback
+   * @param {EventListenerOrEventListenerObject} callback
    * @param {boolean | AddEventListenerOptions} [options]
    * @returns {void}
    *
    * @method
    * @template {keyof VideoCreatorEventMap} K
    * @param {string} type
-   * @param {(event: Event) => void} callback
+   * @param {EventListenerOrEventListenerObject} callback
    * @param {boolean | AddEventListenerOptions} [options]
    * @returns {void}
    */
