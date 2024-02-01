@@ -114,6 +114,9 @@ export default class VideoCreator extends HTMLElement {
     this.#status = 1;
 
 
+    this.dispatchEvent(new Event("rendering"));
+
+
     this.#renderer = worker;
 
 
@@ -483,7 +486,10 @@ export default class VideoCreator extends HTMLElement {
     await waitForEvent(recorder, "stop");
 
 
-    return new Blob(chunks, { type: this.type });
+    const video = new Blob(chunks, { type: this.type });
+
+    this.dispatchEvent(new GeneratedEvent("generated", { video }));
+    return video;
   }
 
 
@@ -515,12 +521,15 @@ export default class VideoCreator extends HTMLElement {
 /**
  * @exports
  * @typedef {HTMLElementEventMap & {
+ *   rendering: Event;
  *   rendered: Event;
  *   generating: GeneratingEvent;
+ *   generated: GeneratedEvent;
  * }} VideoCreatorEventMap
  * 
  * 
  * @typedef {EventInit & { consuming?: boolean }} GeneratingEventInit
+ * @typedef {EventInit & { video: Blob }} GeneratedEventInit
  */
 
 
@@ -535,6 +544,19 @@ export class GeneratingEvent extends Event {
 
     /** whether or not the video is being consumed */
     this.consuming = eventInitDict.consuming ?? true;
+  }
+}
+export class GeneratedEvent extends Event {
+  /**
+   * @param {string} type
+   * @param {GeneratedEventInit} eventInitDict
+   */
+  constructor(type, eventInitDict) {
+    super(type, eventInitDict);
+
+
+    /** the generated video */
+    this.video = eventInitDict.video;
   }
 }
 
