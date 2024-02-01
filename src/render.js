@@ -1,4 +1,5 @@
 import Video from "./video.js";
+import { sleep } from "./funcs.js";
 
 
 /** a class for defining videos */
@@ -98,10 +99,10 @@ export default class VideoSrc {
 
     const frames = await /** @type {Promise<ImageBitmap[]>} */ (new Promise(
       resolve => {
-        /** @param {MessageEvent<VideoResponse>} event */
-        const resolution = ({ data: { type, src: videoSrc, frames } }) => {
-          if (type === "video response" && videoSrc === src) {
-            resolve(frames);
+        /** @param {MessageEvent<RenderInput>} event */
+        const resolution = ({ data }) => {
+          if (data.type === "video response" && data.src === src) {
+            resolve(data.frames);
 
 
             self.removeEventListener("message", resolution);
@@ -134,15 +135,14 @@ export default class VideoSrc {
 
   /** use to define the class as the one to be used as the video */
   static async render() {
-    if (this === VideoSrc)
-      throw new Error("render called on base class");
-
-
     const { width, height, frameRate } = await new Promise(
       /** @param {(value: RenderInit) => void} resolve */
       resolve => {
-        /** @param {MessageEvent<RenderInit>} event */
+        /** @param {MessageEvent<RenderInput>} event */
         const onMessage = ({ data }) => {
+          if (data.type !== "render init") return;
+          
+
           resolve(data);
           self.removeEventListener("message", onMessage);
         };
@@ -161,10 +161,28 @@ export default class VideoSrc {
     const frames = [];
 
 
+    let lastUpdated = Date.now();
+
+    let aborted = false;
+    self.addEventListener("message",
+      /** @param {MessageEvent<RenderInput>} event */
+      ({ data }) => { if (data.type === "abort") aborted = true; },
+    );
+
+
     await videoSrc.setup();
 
 
     while (true) {
+      if (Date.now() - lastUpdated >= 1000) {
+        await sleep();
+
+        lastUpdated = Date.now();
+      }
+
+      if (aborted) return;
+
+
       if (await videoSrc.draw()) break;
 
       frames.push(canvas.transferToImageBitmap());
@@ -176,6 +194,10 @@ export default class VideoSrc {
       for (const video of Video.videos.filter(video => video.playing))
         video.frame++;
     }
+
+
+    await sleep();
+    if (aborted) return;
 
 
     postMessage(/** @satisfies {RenderOutput} */({
@@ -192,6 +214,7 @@ export default class VideoSrc {
  * 
  * 
  * @typedef RenderInit
+ * @prop {"render init"} type
  * @prop {number} width - the width of the video
  * @prop {number} height - the height of the video
  * @prop {number} frameRate - the framerate of the video
@@ -201,6 +224,10 @@ export default class VideoSrc {
  * @prop {ImageBitmap[]} frames - the frames of video
  * @prop {AudioInstructions} audioInstructions
  *   - keys are audio file being used, values are the sounds being played
+ * 
+ * 
+ * @typedef AbortSignal
+ * @prop {"abort"} type
  * 
  * 
  * @typedef VideoRequest
@@ -215,6 +242,7 @@ export default class VideoSrc {
  * @prop {ImageBitmap[]} frames
  * 
  * 
+ * @typedef {RenderInit | VideoResponse | AbortSignal} RenderInput
  * @typedef {RenderOutput | VideoRequest} RenderMessage
  * 
  * 

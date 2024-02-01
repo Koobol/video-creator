@@ -7,15 +7,7 @@
  */
 
 
-export {};
-
-
-/** @param {number} time */
-const sleep = (time = 0) => {
-  return new Promise(resolve => {
-    setTimeout(resolve, time);
-  });
-};
+import { sleep } from "./funcs.js";
 
 
 self.addEventListener(

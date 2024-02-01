@@ -87,25 +87,38 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
-  /** whether or not {@linkcode render} has been called yet */
-  #rendered = false;
+  /** @type {Worker | null} */
+  #renderer = null;
+
+  #status = 0;
+  /**
+   * the status of the video's rendering
+   * - 0 = waiting
+   * - 1 = rendering
+   * - 2 = rendered
+   * - 3 = consumed
+   */
+  get status() { return this.#status; }
   /**
    * render the video with the given worker
    * @param {Worker} worker
    */
-  render(worker) {
-    if (this.#rendered) {
+  async render(worker) {
+    if (this.status > 0) {
       if (this.src === null)
         throw new Error("VideoCreator#render can only be called once");
       throw new Error(
         "VideoCreator#render can only be called if the VideoCreator has no src",
       );
     }
-    this.#rendered = true;
+    this.#status = 1;
 
+
+    this.#renderer = worker;
 
 
     worker.postMessage(/** @satisfies {import("./render").RenderInit} */ ({
+      type: "render init",
       width: this.#preview.width,
       height: this.#preview.height,
       frameRate: this.frameRate,
@@ -164,95 +177,103 @@ export default class VideoCreator extends HTMLElement {
     );
 
 
-    worker.addEventListener(
-      "message",
-      /** @param {MessageEvent<import("./render").RenderMessage>} event */
-      async ({ data }) => {
-        if (data.type !== "output") return;
+    const { frames, audioInstructions } = await new Promise(
+      /** @param {(data: import("./render").RenderOutput) => void} resolve */
+      resolve => {
+        /** @param {MessageEvent<import("./render").RenderMessage>} event */
+        const resolution = ({ data }) => {
+          if (data?.type !== "output") return;
 
-        
-        const { frames, audioInstructions } = data;
-
-
-        this.#frames = frames;
-
-
-        // compile audioInstructions
-        const audioCtx = new OfflineAudioContext(
-          1,
-          frames.length / this.frameRate * 44100,
-          44100,
-        );
-
-        /** @type {Promise<void>[]} */
-        const promises = [];
-        for (const [fileName, instructions] of audioInstructions) {
-          promises.push((async () => {
-            const fullBuffer = await audioCtx.decodeAudioData(
-              await (await fetch(fileName)).arrayBuffer(),
-            );
-
-            for (const instruction of instructions) {
-              const buffer = !instruction.startAt ? fullBuffer
-                : clipAudioBuffer(fullBuffer, instruction.startAt);
-
-
-              let bufferSrc = new AudioBufferSourceNode(audioCtx, { buffer });
-              bufferSrc.connect(audioCtx.destination);
-
-
-              bufferSrc.start(instruction.timestamp);
-              if (instruction.stop !== undefined)
-                bufferSrc.stop(instruction.stop);
-            }
-          })());
+          worker.removeEventListener("message", resolution);
+          resolve(data);
         }
-        await Promise.all(promises);
-
-        this.#audio = await audioCtx.startRendering();
-
-
-        this.#search.disabled = false;
-        this.#search.max = `${frames.length - 1}`;
-
-
-        this.#search.addEventListener("input", () => {
-          this.#frame = this.frame;
-
-          this.pause();
-        });
-
-
-        this.#search.dispatchEvent(new Event("input"));
-
-
-        this.#play.disabled = false;
-        
-        this.#play.addEventListener("click", () => {
-          this.#play.ariaChecked = `${this.#play.ariaChecked === "false"}`;
-
-          if (this.#play.ariaChecked === "true") this.play();
-          else this.pause();
-        });
-        
-
-        this.#download.disabled = false;
-        this.#download.addEventListener("click", async () => {
-          const video = await this.generateVideo();
-    
-
-          const a = document.createElement("a");
-          a.download = "video";
-          a.href = URL.createObjectURL(video);
-          a.click();
-
-          URL.revokeObjectURL(a.href);
-
-
-          this.#progress.removeAttribute("style");
-        });
+        worker.addEventListener("message", resolution);
       },
     );
+
+
+    this.#frames = frames;
+
+
+    // compile audioInstructions
+    const audioCtx = new OfflineAudioContext(
+      1,
+      frames.length / this.frameRate * 44100,
+      44100,
+    );
+
+    /** @type {Promise<void>[]} */
+    const promises = [];
+    for (const [fileName, instructions] of audioInstructions) {
+      promises.push((async () => {
+        const fullBuffer = await audioCtx.decodeAudioData(
+          await (await fetch(fileName)).arrayBuffer(),
+        );
+
+        for (const instruction of instructions) {
+          const buffer = !instruction.startAt ? fullBuffer
+            : clipAudioBuffer(fullBuffer, instruction.startAt);
+
+
+          let bufferSrc = new AudioBufferSourceNode(audioCtx, { buffer });
+          bufferSrc.connect(audioCtx.destination);
+
+
+          bufferSrc.start(instruction.timestamp);
+          if (instruction.stop !== undefined)
+            bufferSrc.stop(instruction.stop);
+        }
+      })());
+    }
+    await Promise.all(promises);
+
+    this.#audio = await audioCtx.startRendering();
+
+
+    this.#search.disabled = false;
+    this.#search.max = `${frames.length - 1}`;
+
+
+    this.#search.addEventListener("input", () => {
+      this.#frame = this.frame;
+
+      this.pause();
+    });
+
+
+    this.#search.dispatchEvent(new Event("input"));
+
+
+    this.#play.disabled = false;
+
+    this.#play.addEventListener("click", () => {
+      this.#play.ariaChecked = `${this.#play.ariaChecked === "false"}`;
+
+      if (this.#play.ariaChecked === "true") this.play();
+      else this.pause();
+    });
+
+
+    this.#download.disabled = false;
+    this.#download.addEventListener("click", async () => {
+      const video = await this.generateVideo();
+
+
+      const a = document.createElement("a");
+      a.download = "video";
+      a.href = URL.createObjectURL(video);
+      a.click();
+
+      URL.revokeObjectURL(a.href);
+
+
+      this.#progress.removeAttribute("style");
+    });
+
+
+    this.#status = 2;
+
+    this.dispatchEvent(new Event("rendered"));
   }
 
 
@@ -395,6 +416,9 @@ export default class VideoCreator extends HTMLElement {
     this.#progress.value = 0;
 
 
+    this.#status = 3;
+
+
     const paint = new Worker(
       new URL("paint.js", import.meta.url),
       { type: "module" },
@@ -455,7 +479,39 @@ export default class VideoCreator extends HTMLElement {
 
     return new Blob(chunks, { type: this.type });
   }
+
+
+  /**
+   * @overload
+   * @param {K} type
+   * @param {(event: VideoCreatorEventMap[K]) => void} callback
+   * @param {boolean | AddEventListenerOptions} [options]
+   * @returns {void}
+   *
+   * @overload
+   * @param {string} type
+   * @param {(event: Event) => void} callback
+   * @param {boolean | AddEventListenerOptions} [options]
+   * @returns {void}
+   *
+   * @method
+   * @template {keyof VideoCreatorEventMap} K
+   * @param {string} type
+   * @param {(event: Event) => void} callback
+   * @param {boolean | AddEventListenerOptions} [options]
+   * @returns {void}
+   */
+  addEventListener(type, callback, options) {
+    super.addEventListener(type, callback, options);
+  }
 }
+
+/**
+ * @exports
+ * @typedef {HTMLElementEventMap & {
+ *   rendered: Event
+ * }} VideoCreatorEventMap
+ */
 
 
 /**
