@@ -92,6 +92,34 @@ export default class VideoCreator extends HTMLElement {
       this.seeking = true;
     });
 
+    this.#search.addEventListener("input", () => {
+      this.#frame = this.frame;
+
+      this.pause();
+    });
+
+    this.#play.addEventListener("click", () => {
+      this.#play.ariaChecked = `${this.#play.ariaChecked === "false"}`;
+
+      if (this.#play.ariaChecked === "true") this.play();
+      else this.pause();
+    });
+
+    this.#download.addEventListener("click", async () => {
+      const video = await this.generateVideo();
+
+
+      const a = document.createElement("a");
+      a.download = "video";
+      a.href = URL.createObjectURL(video);
+      a.click();
+
+      URL.revokeObjectURL(a.href);
+
+
+      this.#progress.removeAttribute("style");
+    });
+
 
     if (this.src === null) return;
     
@@ -129,7 +157,6 @@ export default class VideoCreator extends HTMLElement {
       );
     }
     this.#state = "rendering";
-
 
     this.dispatchEvent(new Event("rendering"));
 
@@ -254,41 +281,13 @@ export default class VideoCreator extends HTMLElement {
     this.#search.max = `${frames.length - 1}`;
 
 
-    this.#search.addEventListener("input", () => {
-      this.#frame = this.frame;
-
-      this.pause();
-    });
-
-
     this.#search.dispatchEvent(new Event("input"));
 
 
     this.#play.disabled = false;
 
-    this.#play.addEventListener("click", () => {
-      this.#play.ariaChecked = `${this.#play.ariaChecked === "false"}`;
-
-      if (this.#play.ariaChecked === "true") this.play();
-      else this.pause();
-    });
-
 
     this.#download.disabled = false;
-    this.#download.addEventListener("click", async () => {
-      const video = await this.generateVideo();
-
-
-      const a = document.createElement("a");
-      a.download = "video";
-      a.href = URL.createObjectURL(video);
-      a.click();
-
-      URL.revokeObjectURL(a.href);
-
-
-      this.#progress.removeAttribute("style");
-    });
 
 
     this.#state = "rendered";
