@@ -406,26 +406,29 @@ export default class VideoCreator extends HTMLElement {
 
 
   /**
-   * @param {boolean} [consuming] - whether or not to consume the video
+   * @param {boolean} [consuming]
+   *   - whether or not to consume the video for performance
    */
   async generateVideo(consuming = true) {
     this.dispatchEvent(new GeneratingEvent("generating", { consuming }));
 
 
-    this.#play.disabled = true;
-    this.#search.disabled = true;
+    if (consuming) {
+      this.#play.disabled = true;
+      this.#search.disabled = true;
 
-    this.pause();
+      this.pause();
 
-    this.#download.disabled = true;
-
-
-    this.#progress.style.display = "unset";
-    this.#progress.max = this.#frames.length / this.frameRate * 1000;
-    this.#progress.value = 0;
+      this.#download.disabled = true;
 
 
-    this.#status = 3;
+      this.#progress.style.display = "unset";
+      this.#progress.max = this.#frames.length / this.frameRate * 1000;
+      this.#progress.value = 0;
+
+
+      this.#status = 3;
+    }
 
 
     const paint = new Worker(
@@ -469,15 +472,17 @@ export default class VideoCreator extends HTMLElement {
     bufferSrc.start();
 
 
-    const start = Date.now();
-    const displayProgress = () => {
-      this.#progress.value = Date.now() - start;
+    if (consuming) {
+      const start = Date.now();
+      const displayProgress = () => {
+        this.#progress.value = Date.now() - start;
 
 
-      if (this.#progress.value < this.#progress.max)
-        requestAnimationFrame(displayProgress);
+        if (this.#progress.value < this.#progress.max)
+          requestAnimationFrame(displayProgress);
+      }
+      displayProgress();
     }
-    displayProgress();
 
 
     await waitForEvent(paint, "message");
