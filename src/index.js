@@ -2,7 +2,7 @@ import css from "./css.js";
 
 
 export default class VideoCreator extends HTMLElement {
-  static shadow;
+  static #shadow;
   static {
     const template = document.createElement("template");
     template.innerHTML = `
@@ -24,8 +24,11 @@ export default class VideoCreator extends HTMLElement {
       </div>
     `;
     
-    this.shadow = template.content;
+    this.#shadow = template.content;
   }
+
+
+  seeking = false;
 
 
   #play;
@@ -54,7 +57,7 @@ export default class VideoCreator extends HTMLElement {
 
 
     const shadow = this.attachShadow({ mode: "closed" });
-    shadow.appendChild(VideoCreator.shadow);
+    shadow.appendChild(VideoCreator.#shadow);
 
 
     this.#preview = /** @type {HTMLCanvasElement} */
@@ -76,6 +79,18 @@ export default class VideoCreator extends HTMLElement {
       (shadow.querySelector("#download"));
     this.#progress = /** @type {HTMLProgressElement} */
       (shadow.querySelector("progress"));
+    
+
+    this.#search.addEventListener("seeking", () => {
+      this.dispatchEvent(new Event("seeking"));
+
+      this.seeking = true;
+    });
+    this.#search.addEventListener("seeked", () => {
+      this.dispatchEvent(new Event("seeked"));
+
+      this.seeking = true;
+    });
 
 
     if (this.src === null) return;
@@ -90,28 +105,30 @@ export default class VideoCreator extends HTMLElement {
   /** @type {Worker | null} */
   #renderer = null;
 
-  #status = 0;
   /**
-   * the status of the video's rendering
-   * - 0 = waiting
-   * - 1 = rendering
-   * - 2 = rendered
-   * - 3 = consumed
+   * @type {(
+   * | "waiting"
+   * | "rendering"
+   * | "rendered"
+   * | "consumed"
+   * )}
    */
-  get status() { return this.#status; }
+  #state = "waiting";
+  /** the status of the video's rendering */
+  get state() { return this.#state; }
   /**
    * render the video with the given worker
    * @param {Worker} worker
    */
   async render(worker) {
-    if (this.status > 0) {
+    if (this.state !== "waiting") {
       if (this.src === null)
         throw new Error("VideoCreator#render can only be called once");
       throw new Error(
         "VideoCreator#render can only be called if the VideoCreator has no src",
       );
     }
-    this.#status = 1;
+    this.#state = "rendering";
 
 
     this.dispatchEvent(new Event("rendering"));
@@ -274,7 +291,7 @@ export default class VideoCreator extends HTMLElement {
     });
 
 
-    this.#status = 2;
+    this.#state = "rendered";
 
     this.dispatchEvent(new Event("rendered"));
   }
@@ -301,6 +318,9 @@ export default class VideoCreator extends HTMLElement {
    */
   play() {
     if (this.#audioCtx === null) this.#audioCtx = new AudioContext();
+
+
+    this.dispatchEvent(new Event("play"));
 
 
     if (this.#playTimeout !== undefined) return;
@@ -357,10 +377,14 @@ export default class VideoCreator extends HTMLElement {
     this.#playing.start(0);
   }
 
-  /**
-   * pause the preview
-   */
+  /** pause the preview */
   pause() {
+    if (!this.playing) return;
+
+
+    this.dispatchEvent(new Event("pause"));
+
+
     clearTimeout(this.#playTimeout);
     this.#playTimeout = undefined;
 
@@ -371,6 +395,8 @@ export default class VideoCreator extends HTMLElement {
     this.#playing?.stop();
   }
 
+  get playing() { return this.#audioCtx?.state === "running"; }
+  
 
   get frame() { return this.#search.valueAsNumber; }
   /**
@@ -382,6 +408,9 @@ export default class VideoCreator extends HTMLElement {
 
 
     this.#ctx.drawImage(this.#frames[frame], 0, 0);
+
+
+    this.dispatchEvent(new Event("timeupdate"));
   }
   set frame(frame) {
     if (frame >= this.#frames?.length || frame < 0)
@@ -394,8 +423,8 @@ export default class VideoCreator extends HTMLElement {
   }
 
   /** the time that the video is currently at, in seconds */
-  get time() { return this.frame / this.frameRate; }
-  set time(time) {
+  get currentTime() { return this.frame / this.frameRate; }
+  set currentTime(time) {
     this.frame = Math.round(
       Math.min(Math.max(time, 0), this.length) * this.frameRate,
     );
@@ -427,7 +456,7 @@ export default class VideoCreator extends HTMLElement {
       this.#progress.value = 0;
 
 
-      this.#status = 3;
+      this.#state = "consumed";
     }
 
 
@@ -530,6 +559,11 @@ export default class VideoCreator extends HTMLElement {
  *   rendered: Event;
  *   generating: GeneratingEvent;
  *   generated: GeneratedEvent;
+ *   play: Event;
+ *   pause: Event;
+ *   seeking: Event;
+ *   seeked: Event;
+ *   timeupdate: Event;
  * }} VideoCreatorEventMap
  * 
  * 
