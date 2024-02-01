@@ -71,7 +71,8 @@ export default class VideoSrc {
    * @param {symbol} sound
    */
   stopSound(sound) {
-    this.#sounds.get(sound).stop = this.frame / this.frameRate;
+    const instruction = this.#sounds.get(sound);
+    if (instruction) instruction.stop = this.frame / this.frameRate;
   }
 
   /** @type {Map<symbol, AudioInstruction>} */

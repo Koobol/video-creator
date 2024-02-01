@@ -41,16 +41,16 @@ export default class VideoCreator extends HTMLElement {
   #preview;
   #ctx;
 
-  /** @type {AudioContext | null} */
+  /** @type {AudioContext?} */
   #audioCtx = null;
   /** @type {AudioBufferSourceNode?} */
   #playing = null;
 
 
-  /** @type {ImageBitmap[]} */
-  #frames;
-  /** @type {AudioBuffer} */
-  #audio;
+  /** @type {ImageBitmap[]?} */
+  #frames = null;
+  /** @type {AudioBuffer?} */
+  #audio = null;
 
   constructor() {
     super();
@@ -102,7 +102,7 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
-  /** @type {Worker | null} */
+  /** @type {Worker?} */
   #renderer = null;
 
   /**
@@ -317,6 +317,9 @@ export default class VideoCreator extends HTMLElement {
    * start playing the preview
    */
   play() {
+    if (this.#frames === null || this.#audio === null) return;
+
+
     if (this.#audioCtx === null) this.#audioCtx = new AudioContext();
 
 
@@ -340,6 +343,9 @@ export default class VideoCreator extends HTMLElement {
     let lastFrame = Date.now();
 
     const nextFrame = () => {
+      if (this.#frames === null) return;
+
+
       const actualTime = Date.now() - lastFrame;
 
       lastFrame = Date.now();
@@ -404,6 +410,9 @@ export default class VideoCreator extends HTMLElement {
    * @param {number} frame
    */
   set #frame(frame) {
+    if (this.#frames === null) return;
+
+
     this.#ctx.clearRect(0, 0, this.#preview.width, this.#preview.height);
 
 
@@ -413,6 +422,9 @@ export default class VideoCreator extends HTMLElement {
     this.dispatchEvent(new Event("timeupdate"));
   }
   set frame(frame) {
+    if (this.#frames === null) return;
+
+
     if (frame >= this.#frames?.length || frame < 0)
       throw new RangeError(`frame ${frame} does not exist`);
 
@@ -425,13 +437,21 @@ export default class VideoCreator extends HTMLElement {
   /** the time that the video is currently at, in seconds */
   get currentTime() { return this.frame / this.frameRate; }
   set currentTime(time) {
+    if (this.length === null) return;
+
+
     this.frame = Math.round(
       Math.min(Math.max(time, 0), this.length) * this.frameRate,
     );
   }
 
 
-  get length() { return (this.#frames.length - 1) / this.frameRate; }
+  get length() {
+    if (this.#frames === null) return null;
+
+
+    return (this.#frames.length - 1) / this.frameRate;
+  }
 
 
   /**
@@ -439,6 +459,9 @@ export default class VideoCreator extends HTMLElement {
    *   - whether or not to consume the video for performance
    */
   async generateVideo(consuming = true) {
+    if (this.#frames === null) throw new Error("Video isn't rendered yet");
+
+
     this.dispatchEvent(new GeneratingEvent("generating", { consuming }));
 
 
@@ -502,6 +525,9 @@ export default class VideoCreator extends HTMLElement {
 
 
     if (consuming) {
+      this.#frames = null;
+
+
       const start = Date.now();
       const displayProgress = () => {
         this.#progress.value = Date.now() - start;
@@ -518,6 +544,9 @@ export default class VideoCreator extends HTMLElement {
     recorder.stop();
 
     await waitForEvent(recorder, "stop");
+
+
+    if (consuming) this.#audio = null;
 
 
     const video = new Blob(chunks, { type: this.type });

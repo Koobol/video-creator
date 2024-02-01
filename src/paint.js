@@ -26,7 +26,8 @@ self.addEventListener(
     let frame = 0;
 
 
-    const ctx = offscreen.getContext("bitmaprenderer");
+    const ctx = /** @type {ImageBitmapRenderingContext} */
+      (offscreen.getContext("bitmaprenderer"));
 
 
     let warned = false;
