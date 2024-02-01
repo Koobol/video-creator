@@ -1,6 +1,7 @@
 import Video from "./video.js";
 
 
+/** a class for defining videos */
 export default class VideoSrc {
   /**
    * only to be called by video-creator

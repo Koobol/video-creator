@@ -78,7 +78,7 @@ export default class VideoCreator extends HTMLElement {
       (shadow.querySelector("progress"));
 
 
-    if (this.src === "") return;
+    if (this.src === null) return;
     
     this.render(new Worker(
       new URL(this.src, location.href),
@@ -95,7 +95,7 @@ export default class VideoCreator extends HTMLElement {
    */
   render(worker) {
     if (this.#rendered) {
-      if (this.src === "")
+      if (this.src === null)
         throw new Error("VideoCreator#render can only be called once");
       throw new Error(
         "VideoCreator#render can only be called if the VideoCreator has no src",
@@ -237,7 +237,20 @@ export default class VideoCreator extends HTMLElement {
         
 
         this.#download.disabled = false;
-        this.#download.addEventListener("click", () => { this.generateVideo(); });
+        this.#download.addEventListener("click", async () => {
+          const video = await this.generateVideo();
+    
+
+          const a = document.createElement("a");
+          a.download = "video";
+          a.href = URL.createObjectURL(video);
+          a.click();
+
+          URL.revokeObjectURL(a.href);
+
+
+          this.#progress.removeAttribute("style");
+        });
       },
     );
   }
@@ -246,7 +259,7 @@ export default class VideoCreator extends HTMLElement {
   get width() { return Number(this.getAttribute("width")); }
   get height() { return Number(this.getAttribute("height")); }
 
-  get src() { return this.getAttribute("src") ?? ""; }
+  get src() { return this.getAttribute("src"); }
 
   /** the mime type of the generated video */
   get type() { return this.getAttribute("type") ?? "video/webm"; }
@@ -356,6 +369,17 @@ export default class VideoCreator extends HTMLElement {
     this.#frame = frame;
   }
 
+  /** the time that the video is currently at, in seconds */
+  get time() { return this.frame / this.frameRate; }
+  set time(time) {
+    this.frame = Math.round(
+      Math.min(Math.max(time, 0), this.length) * this.frameRate,
+    );
+  }
+
+
+  get length() { return (this.#frames.length - 1) / this.frameRate; }
+
 
   async generateVideo() {
     this.#play.disabled = true;
@@ -429,15 +453,7 @@ export default class VideoCreator extends HTMLElement {
     await waitForEvent(recorder, "stop");
 
 
-    const a = document.createElement("a");
-    a.download = "video";
-    a.href = URL.createObjectURL(new Blob(chunks, { type: this.type }));
-    a.click();
-
-    URL.revokeObjectURL(a.href);
-
-
-    this.#progress.removeAttribute("style");
+    return new Blob(chunks, { type: this.type });
   }
 }
 
