@@ -171,7 +171,7 @@ export default class VideoCreator extends HTMLElement {
             src,
             frames,
           }),
-          { transfer: frames },
+          frames,
         );
       }
     );
@@ -402,7 +402,13 @@ export default class VideoCreator extends HTMLElement {
   get length() { return (this.#frames.length - 1) / this.frameRate; }
 
 
-  async generateVideo() {
+  /**
+   * @param {boolean} [consuming] - whether or not to consume the video
+   */
+  async generateVideo(consuming = true) {
+    this.dispatchEvent(new GeneratingEvent("generating", { consuming }));
+
+
     this.#play.disabled = true;
     this.#search.disabled = true;
 
@@ -456,7 +462,7 @@ export default class VideoCreator extends HTMLElement {
       frames: this.#frames,
       offscreen,
       frameRate: this.frameRate,
-    }), [...this.#frames, offscreen]);
+    }), [...(consuming ? this.#frames : []), offscreen]);
     bufferSrc.start();
 
 
@@ -509,9 +515,28 @@ export default class VideoCreator extends HTMLElement {
 /**
  * @exports
  * @typedef {HTMLElementEventMap & {
- *   rendered: Event
+ *   rendered: Event;
+ *   generating: GeneratingEvent;
  * }} VideoCreatorEventMap
+ * 
+ * 
+ * @typedef {EventInit & { consuming?: boolean }} GeneratingEventInit
  */
+
+
+export class GeneratingEvent extends Event {
+  /**
+   * @param {string} type
+   * @param {GeneratingEventInit} eventInitDict
+   */
+  constructor(type, eventInitDict) {
+    super(type, eventInitDict);
+
+
+    /** whether or not the video is being consumed */
+    this.consuming = eventInitDict.consuming ?? true;
+  }
+}
 
 
 /**
