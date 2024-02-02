@@ -60,7 +60,5 @@ canvas {
 input { grid-area: search; }
 div {
   grid-area: download;
-
-  > progress { display: none; }
 }
 `;

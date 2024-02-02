@@ -20,7 +20,7 @@ export default class VideoCreator extends HTMLElement {
 
       <div>
         <button id="download" disabled>Download</button>
-        <progress></progress>
+        <progress hidden></progress>
       </div>
     `;
     
@@ -131,14 +131,13 @@ export default class VideoCreator extends HTMLElement {
 
 
   /** @type {Worker?} */
-  #renderer = null;
+  #render = null;
 
   /**
    * @type {(
    * | "waiting"
    * | "rendering"
    * | "rendered"
-   * | "consumed"
    * )}
    */
   #state = "waiting";
@@ -150,18 +149,14 @@ export default class VideoCreator extends HTMLElement {
    */
   async render(worker) {
     if (this.state !== "waiting") {
-      if (this.src === null)
-        throw new Error("VideoCreator#render can only be called once");
-      throw new Error(
-        "VideoCreator#render can only be called if the VideoCreator has no src",
-      );
+      this.reset();
     }
     this.#state = "rendering";
 
     this.dispatchEvent(new Event("rendering"));
 
 
-    this.#renderer = worker;
+    this.#render = worker;
 
 
     worker.postMessage(/** @satisfies {import("./render").RenderInit} */ ({
@@ -224,19 +219,32 @@ export default class VideoCreator extends HTMLElement {
     );
 
 
-    const { frames, audioInstructions } = await new Promise(
-      /** @param {(data: import("./render").RenderOutput) => void} resolve */
+    const signal = await new Promise(
+      /** @param {(data: import("./render").RenderOutput | "abort") => void} resolve */
       resolve => {
         /** @param {MessageEvent<import("./render").RenderMessage>} event */
         const resolution = ({ data }) => {
-          if (data?.type !== "output") return;
-
-          worker.removeEventListener("message", resolution);
-          resolve(data);
+          switch (data?.type) {
+            case "output":
+              worker.removeEventListener("message", resolution);
+              resolve(data);
+              break;
+            case "abort":
+              resolve("abort");
+              break;
+            default: return;
+          }
         }
         worker.addEventListener("message", resolution);
       },
     );
+    if (this.#abort || signal === "abort") {
+      this.#abort = false;
+
+      return;
+    }
+
+    const { frames, audioInstructions } = signal;
 
 
     this.#frames = frames;
@@ -277,22 +285,61 @@ export default class VideoCreator extends HTMLElement {
     this.#audio = await audioCtx.startRendering();
 
 
-    this.#search.disabled = false;
+    this.#disabled = false;
+
+
     this.#search.max = `${frames.length - 1}`;
 
 
     this.#search.dispatchEvent(new Event("input"));
 
 
-    this.#play.disabled = false;
-
-
-    this.#download.disabled = false;
+    this.#render = null;
 
 
     this.#state = "rendered";
 
     this.dispatchEvent(new Event("rendered"));
+  }
+
+  /** whether or not to abort rendering */
+  #abort = false;
+  /** reset the VideoCreator to waiting */
+  reset() {
+    this.#disabled = true;
+
+
+    this.#render
+      ?.postMessage(/** @satisfies {import("./render").AbortSignal} */ ({
+        type: "abort",
+      }));
+    this.#render = null;
+
+    if (this.#state === "rendering") this.#abort = true;
+
+
+    this.#ctx.clearRect(0, 0, this.#preview.width, this.#preview.height);
+
+
+    this.#frames = null;
+    this.#audio = null;
+
+
+    this.#progress.hidden = true;
+
+
+    this.#state = "waiting";
+  }
+
+
+  /** @param {boolean} value */
+  set #disabled(value) {
+    this.#search.disabled = value;
+    this.#play.disabled = value;
+    this.#download.disabled = value;
+
+    if (value) return;
+    this.pause();
   }
 
 
@@ -401,7 +448,7 @@ export default class VideoCreator extends HTMLElement {
   }
 
   get playing() { return this.#audioCtx?.state === "running"; }
-  
+
 
   get frame() { return this.#search.valueAsNumber; }
   /**
@@ -415,7 +462,13 @@ export default class VideoCreator extends HTMLElement {
     this.#ctx.clearRect(0, 0, this.#preview.width, this.#preview.height);
 
 
-    this.#ctx.drawImage(this.#frames[frame], 0, 0);
+    this.#ctx.drawImage(
+      this.#frames[frame],
+      0,
+      0,
+      this.#preview.width,
+      this.#preview.height,
+    );
 
 
     this.dispatchEvent(new Event("timeupdate"));
@@ -464,24 +517,6 @@ export default class VideoCreator extends HTMLElement {
     this.dispatchEvent(new GeneratingEvent("generating", { consuming }));
 
 
-    if (consuming) {
-      this.#play.disabled = true;
-      this.#search.disabled = true;
-
-      this.pause();
-
-      this.#download.disabled = true;
-
-
-      this.#progress.style.display = "unset";
-      this.#progress.max = this.#frames.length / this.frameRate * 1000;
-      this.#progress.value = 0;
-
-
-      this.#state = "consumed";
-    }
-
-
     const paint = new Worker(
       new URL("paint.js", import.meta.url),
       { type: "module" },
@@ -524,7 +559,14 @@ export default class VideoCreator extends HTMLElement {
 
 
     if (consuming) {
-      this.#frames = null;
+      this.#disabled = true;
+
+      this.#progress.max = this.#frames.length / this.frameRate * 1000;
+      this.#progress.value = 0;
+
+      this.reset();
+
+      this.#progress.hidden = false;
 
 
       const start = Date.now();
@@ -545,7 +587,7 @@ export default class VideoCreator extends HTMLElement {
     await waitForEvent(recorder, "stop");
 
 
-    if (consuming) this.#audio = null;
+    if (consuming) this.#progress.hidden = true;
 
 
     const video = new Blob(chunks, { type: this.type });

@@ -181,7 +181,11 @@ export default class VideoSrc {
         lastUpdated = Date.now();
       }
 
-      if (aborted) return;
+      if (aborted) {
+        postMessage(/** @satisfies {AbortSignal} */({ type: "abort" }));
+
+        return;
+      };
 
 
       if (await videoSrc.draw()) break;
@@ -198,7 +202,11 @@ export default class VideoSrc {
 
 
     await sleep();
-    if (aborted) return;
+    if (aborted) {
+      postMessage(/** @satisfies {AbortSignal} */ ({ type: "abort" }));
+
+      return;
+    };
 
 
     postMessage(/** @satisfies {RenderOutput} */({
@@ -244,7 +252,7 @@ export default class VideoSrc {
  * 
  * 
  * @typedef {RenderInit | VideoResponse | AbortSignal} RenderInput
- * @typedef {RenderOutput | VideoRequest} RenderMessage
+ * @typedef {RenderOutput | VideoRequest | AbortSignal} RenderMessage
  * 
  * 
  * @typedef AudioInstruction
