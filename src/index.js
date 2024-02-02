@@ -119,14 +119,6 @@ export default class VideoCreator extends HTMLElement {
 
       this.#progress.removeAttribute("style");
     });
-
-
-    if (this.src === null) return;
-    
-    this.render(new Worker(
-      new URL(this.src, location.href),
-      { type: "module" },
-    ));
   }
 
 
@@ -220,29 +212,32 @@ export default class VideoCreator extends HTMLElement {
 
 
     const signal = await new Promise(
-      /** @param {(data: import("./render").RenderOutput | "abort") => void} resolve */
+      /**
+       * @param {(data: import("./render").RenderOutput | "abort") => void} resolve
+       */
       resolve => {
         /** @param {MessageEvent<import("./render").RenderMessage>} event */
         const resolution = ({ data }) => {
-          switch (data?.type) {
-            case "output":
-              worker.removeEventListener("message", resolution);
-              resolve(data);
-              break;
-            case "abort":
-              resolve("abort");
-              break;
-            default: return;
-          }
+          if (data?.type !== "output") return;
+
+          worker.removeEventListener("message", resolution);
+          this.removeEventListener("reset", abort);
+          resolve(data);
         }
+        const abort = () => {
+          if (!this.#resetting) return;
+          this.#resetting = false;
+
+          worker.removeEventListener("message", resolution);
+          this.removeEventListener("reset", abort);
+          resolve("abort");
+        }
+
         worker.addEventListener("message", resolution);
+        this.addEventListener("reset", abort);
       },
     );
-    if (this.#abort || signal === "abort") {
-      this.#abort = false;
-
-      return;
-    }
+    if (signal === "abort") return;
 
     const { frames, audioInstructions } = signal;
 
@@ -302,20 +297,14 @@ export default class VideoCreator extends HTMLElement {
     this.dispatchEvent(new Event("rendered"));
   }
 
-  /** whether or not to abort rendering */
-  #abort = false;
+  #resetting = false;
   /** reset the VideoCreator to waiting */
   reset() {
     this.#disabled = true;
 
 
-    this.#render
-      ?.postMessage(/** @satisfies {import("./render").AbortSignal} */ ({
-        type: "abort",
-      }));
+    this.#render?.terminate();
     this.#render = null;
-
-    if (this.#state === "rendering") this.#abort = true;
 
 
     this.#ctx.clearRect(0, 0, this.#preview.width, this.#preview.height);
@@ -325,12 +314,10 @@ export default class VideoCreator extends HTMLElement {
     this.#audio = null;
 
 
-    this.#progress.hidden = true;
-
-
     this.#state = "waiting";
 
 
+    this.#resetting = true;
     this.dispatchEvent(new Event("reset"));
   }
 
@@ -346,18 +333,37 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
-  get width() { return Number(this.getAttribute("width")); }
-  get height() { return Number(this.getAttribute("height")); }
+  get width() {
+    const width = Number(this.getAttribute("width"));
+
+    return !isNaN(width) && width > 0 ? width : 300;
+  }
+  set width(value) { this.setAttribute("width", `${value}`); }
+  get height() {
+    const height = Number(this.getAttribute("height"));
+
+    return !isNaN(height) && height > 0 ? height : 150;
+  }
+  set height(value) { this.setAttribute("height", `${value}`); }
 
   get src() { return this.getAttribute("src"); }
+  set src(value) {
+    if (value === null) {
+      this.removeAttribute("src");
+      return;
+    }
+    this.setAttribute("src", value);
+  }
 
   /** the mime type of the generated video */
   get type() { return this.getAttribute("type") ?? "video/webm"; }
+  set type(value) { this.setAttribute("type", value); }
 
   get frameRate() {
     const framerateAttr = Number(this.getAttribute("framerate"));
-    return framerateAttr >= 0 ? framerateAttr : 30;
+    return !isNaN(framerateAttr) && framerateAttr >= 0 ? framerateAttr : 30;
   }
+  set frameRate(value) { this.setAttribute("type", `${value}`); }
 
 
   /** @type {number=} */
@@ -622,6 +628,44 @@ export default class VideoCreator extends HTMLElement {
    */
   addEventListener(type, callback, options) {
     super.addEventListener(type, callback, options);
+  }
+
+
+  static get observedAttributes() { return /** @type {const} */ ([
+    "src",
+    "width",
+    "height",
+    "framerate",
+  ]); }
+  /**
+   * @param {typeof VideoCreator["observedAttributes"][number]} name
+   * @param {string?} oldValue
+   * @param {string?} newValue
+   */
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
+
+    switch (name) {
+      case "width":
+        this.#preview.width = this.width;
+        break;
+      case "height":
+        this.#preview.height = this.height;
+        break;
+    }
+
+
+    if (this.src === null) {
+      if (name !== "src" && this.state !== "waiting") this.reset();
+      return;
+    }
+
+
+    this.render(new Worker(
+      new URL(this.src, location.href),
+      { type: "module" },
+    ));
   }
 }
 

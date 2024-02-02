@@ -162,32 +162,10 @@ export default class VideoSrc {
     const frames = [];
 
 
-    let lastUpdated = Date.now();
-
-    let aborted = false;
-    self.addEventListener("message",
-      /** @param {MessageEvent<RenderInput>} event */
-      ({ data }) => { if (data.type === "abort") aborted = true; },
-    );
-
-
     await videoSrc.setup();
 
 
     while (true) {
-      if (Date.now() - lastUpdated >= 1000) {
-        await sleep();
-
-        lastUpdated = Date.now();
-      }
-
-      if (aborted) {
-        postMessage(/** @satisfies {AbortSignal} */({ type: "abort" }));
-
-        return;
-      };
-
-
       if (await videoSrc.draw()) break;
 
       frames.push(canvas.transferToImageBitmap());
@@ -199,14 +177,6 @@ export default class VideoSrc {
       for (const video of Video.videos.filter(video => video.playing))
         video.frame++;
     }
-
-
-    await sleep();
-    if (aborted) {
-      postMessage(/** @satisfies {AbortSignal} */ ({ type: "abort" }));
-
-      return;
-    };
 
 
     postMessage(/** @satisfies {RenderOutput} */({
@@ -235,10 +205,6 @@ export default class VideoSrc {
  *   - keys are audio file being used, values are the sounds being played
  * 
  * 
- * @typedef AbortSignal
- * @prop {"abort"} type
- * 
- * 
  * @typedef VideoRequest
  * @prop {"video request"} type
  * @prop {string} src
@@ -251,8 +217,8 @@ export default class VideoSrc {
  * @prop {ImageBitmap[]} frames
  * 
  * 
- * @typedef {RenderInit | VideoResponse | AbortSignal} RenderInput
- * @typedef {RenderOutput | VideoRequest | AbortSignal} RenderMessage
+ * @typedef {RenderInit | VideoResponse} RenderInput
+ * @typedef {RenderOutput | VideoRequest} RenderMessage
  * 
  * 
  * @typedef AudioInstruction
