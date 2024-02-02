@@ -329,6 +329,9 @@ export default class VideoCreator extends HTMLElement {
 
 
     this.#state = "waiting";
+
+
+    this.dispatchEvent(new Event("reset"));
   }
 
 
@@ -634,6 +637,7 @@ export default class VideoCreator extends HTMLElement {
  *   seeking: Event;
  *   seeked: Event;
  *   timeupdate: Event;
+ *   reset: Event;
  * }} VideoCreatorEventMap
  * 
  * 
