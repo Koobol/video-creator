@@ -5,23 +5,18 @@ export default `
 
 
 :host {
-  display: grid;
-  grid-template:
-    "video    video" 1fr
-    "play     search" auto
-    "download download" / auto 1fr;
+  display: flex;
+  flex-direction: column;
 
   gap: 5px;
 
 
   inline-size: fit-content;
 }
+:host([hidden]) { display: none; }
 
 
 canvas {
-  grid-area: video;
-
-
   object-fit: scale-down;
   inline-size: 100%;
   block-size: 100%;
@@ -29,10 +24,11 @@ canvas {
 
   background-color: black;
 }
+#play-wrapper:not([hidden]) {
+  display: flex;
+  gap: 5px;
+}
 #play {
-  grid-area: play;
-
-
   &::before {
     content: "";
 
@@ -57,8 +53,7 @@ canvas {
     border-inline-end-color: currentcolor;
   }
 }
-input { grid-area: search; }
-div {
-  grid-area: download;
+input {
+  flex: 1;
 }
 `;

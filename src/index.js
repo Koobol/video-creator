@@ -9,16 +9,18 @@ export default class VideoCreator extends HTMLElement {
       <style>${css}</style>
 
       <canvas></canvas>
-      <button
-        id="play"
-        type="button"
-        role="switch"
-        aria-checked="false"
-        disabled
-      ></button>
-      <input type="range" disabled value="0" step="1">
+      <div id="play-wrapper">
+        <button
+          id="play"
+          type="button"
+          role="switch"
+          aria-checked="false"
+          disabled
+        ></button>
+        <input type="range" disabled value="0" step="1">
+      </div>
 
-      <div>
+      <div id="download-wrapper">
         <button id="download" disabled>Download</button>
         <progress hidden></progress>
       </div>
@@ -31,9 +33,11 @@ export default class VideoCreator extends HTMLElement {
   seeking = false;
 
 
+  #playWrapper;
   #play;
   #search;
 
+  #downloadWrapper;
   #download;
   #progress;
 
@@ -72,9 +76,13 @@ export default class VideoCreator extends HTMLElement {
       this.#preview.height = this.height;
 
 
+    this.#playWrapper = /** @type {HTMLDivElement} */
+      (shadow.querySelector("#play-wrapper"));
     this.#play = /** @type {HTMLButtonElement} */ (shadow.querySelector("#play"));
     this.#search = /** @type {HTMLInputElement} */ (shadow.querySelector("input"));
 
+    this.#downloadWrapper = /** @type {HTMLDivElement} */
+      (shadow.querySelector("#download-wrapper"));
     this.#download = /** @type {HTMLButtonElement} */
       (shadow.querySelector("#download"));
     this.#progress = /** @type {HTMLProgressElement} */
@@ -368,6 +376,14 @@ export default class VideoCreator extends HTMLElement {
   }
   set frameRate(value) { this.setAttribute("framerate", `${value}`); }
 
+  get controls() {
+    const controls = this.getAttribute("controls") ?? "";
+    return new Set(["none", "play", "download"]).has(controls)
+      ? /** @type {"none" | "play" | "download"} */ (controls)
+      : "all";
+  }
+  set controls(value) { this.setAttribute("controls", value); }
+
 
   /** @type {number=} */
   #playTimeout;
@@ -640,6 +656,7 @@ export default class VideoCreator extends HTMLElement {
     "width",
     "height",
     "framerate",
+    "controls",
   ]); }
   /**
    * @param {typeof VideoCreator["observedAttributes"][number]} name
@@ -657,6 +674,12 @@ export default class VideoCreator extends HTMLElement {
       case "height":
         this.#preview.height = this.height;
         break;
+      case "controls":
+        this.#playWrapper.hidden =
+          this.controls !== "all" && this.controls !== "play";
+        this.#downloadWrapper.hidden =
+          this.controls !== "all" && this.controls !== "download";
+        return;
     }
 
 
