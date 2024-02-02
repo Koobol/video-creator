@@ -356,14 +356,17 @@ export default class VideoCreator extends HTMLElement {
   }
 
   /** the mime type of the generated video */
-  get type() { return this.getAttribute("type") ?? "video/webm"; }
+  get type() {
+    const type = this.getAttribute("type") ?? "video/webm";
+    return MediaRecorder.isTypeSupported(type) ? type : "video/webm";
+  }
   set type(value) { this.setAttribute("type", value); }
 
   get frameRate() {
     const framerateAttr = Number(this.getAttribute("framerate"));
     return !isNaN(framerateAttr) && framerateAttr >= 0 ? framerateAttr : 30;
   }
-  set frameRate(value) { this.setAttribute("type", `${value}`); }
+  set frameRate(value) { this.setAttribute("framerate", `${value}`); }
 
 
   /** @type {number=} */
@@ -554,6 +557,7 @@ export default class VideoCreator extends HTMLElement {
     /** @type {Blob[]} */
     const chunks = [];
     recorder.addEventListener("dataavailable", ({ data }) => {
+      if (data.size === 0) return;
       chunks.push(data);
     });
 
@@ -599,7 +603,7 @@ export default class VideoCreator extends HTMLElement {
     if (consuming) this.#progress.hidden = true;
 
 
-    const video = new Blob(chunks, { type: this.type });
+    const video = new Blob(chunks, { type: chunks[0].type });
 
     this.dispatchEvent(new GeneratedEvent("generated", { video }));
     return video;
