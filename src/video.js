@@ -41,23 +41,21 @@ export default class Video {
 
 
     if (this.#frame < this.#frames.length - 1) return;
-    this.playing = false;
+    this.pause();
   }
 
   get playing() { return Boolean(this.#audio); }
-  set playing(play) {
-    if (play === Boolean(this.#audio)) return;
+  
+  play() {
+    if (this.playing) return;
 
-
-    if (!this.#audio) {
-      this.#audio = this.#videoSrc.playSound(
-        this.#src,
-        this.#startAt + this.frame / this.#videoSrc.frameRate,
-      );
-      return;
-    }
-
-
+    this.#audio = this.#videoSrc.playSound(
+      this.#src,
+      this.#startAt + this.frame / this.#videoSrc.frameRate,
+    );
+  }
+  pause() {
+    if (!this.#audio) return;
     this.#videoSrc.stopSound(this.#audio);
     this.#audio = null;
   }
