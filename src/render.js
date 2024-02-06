@@ -24,6 +24,10 @@ export default class VideoSrc {
   get frame() { return this.#frame; }
 
 
+  /** the time, in seconds, that the video is at */
+  get currentTime() { return this.#frame / this.#frameRate; }
+
+
   /**
    * get an ImageBitmap containing the data from the requested file
    * @param {string | URL} src - the file containing the image
