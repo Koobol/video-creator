@@ -1,5 +1,5 @@
 import Video from "./video.js";
-import { sleep } from "./funcs.js";
+import { sleep, getMessage } from "./funcs.js";
 
 
 /** a class for defining videos */
@@ -98,20 +98,7 @@ export default class VideoSrc {
     }));
 
 
-    const frames = await /** @type {Promise<ImageBitmap[]>} */ (new Promise(
-      resolve => {
-        /** @param {MessageEvent<RenderInput>} event */
-        const resolution = ({ data }) => {
-          if (data.type === "video response" && data.src === src) {
-            resolve(data.frames);
-
-
-            self.removeEventListener("message", resolution);
-          }
-        };
-        self.addEventListener("message", resolution);
-      }
-    ));
+    const { frames } = await getMessage("video response");
 
 
     return new Video(frames, src, this, start);
@@ -134,21 +121,27 @@ export default class VideoSrc {
   draw() { throw new Error("no VideoSrc#draw function specified"); }
 
 
-  /** use to define the class as the one to be used as the video */
-  static async render() {
-    const { width, height, frameRate } = await new Promise(
-      /** @param {(value: RenderInit) => void} resolve */
-      resolve => {
-        /** @param {MessageEvent<RenderInput>} event */
-        const onMessage = ({ data }) => {
-          if (data.type !== "render init") return;
-          
+  /**
+   * use to define the class as the one to be used as the video
+   * @param {boolean} [oneTime] - whether or not to only handle one request
+   */
+  static async render(oneTime = false) {
+    if (!oneTime) {
+      while (true) await this.render(true);
+    }
 
-          resolve(data);
-          self.removeEventListener("message", onMessage);
-        };
-        
-        self.addEventListener("message", onMessage);
+
+    const { width, height, frameRate } = await getMessage("render init");
+
+
+    let aborting = false;
+    self.addEventListener(
+      "message",
+      /** @param {MessageEvent<ToRender>} event */
+      ({ data }) => {
+        if (data.type !== "abort") return;
+
+        aborting = true;
       },
     );
 
@@ -162,10 +155,28 @@ export default class VideoSrc {
     const frames = [];
 
 
+    let checkNext = Date.now() + 500;
+
+
     await videoSrc.setup();
 
 
     while (true) {
+      if (Date.now() >= checkNext) {
+        await sleep();
+
+        if (aborting) {
+          self.postMessage(/** @type {AbortSignal} */ ({
+            type: "abort",
+          }));
+          return;
+        }
+
+
+        checkNext = Date.now() + 500;
+      }
+
+
       if (await videoSrc.draw()) break;
 
       frames.push(canvas.transferToImageBitmap());
@@ -205,6 +216,10 @@ export default class VideoSrc {
  *   - keys are audio file being used, values are the sounds being played
  * 
  * 
+ * @typedef AbortSignal
+ * @prop {"abort"} type
+ * 
+ * 
  * @typedef VideoRequest
  * @prop {"video request"} type
  * @prop {string} src
@@ -217,8 +232,8 @@ export default class VideoSrc {
  * @prop {ImageBitmap[]} frames
  * 
  * 
- * @typedef {RenderInit | VideoResponse} RenderInput
- * @typedef {RenderOutput | VideoRequest} RenderMessage
+ * @typedef {RenderInit | VideoResponse | AbortSignal} ToRender
+ * @typedef {RenderOutput | VideoRequest | AbortSignal} FromRender
  * 
  * 
  * @typedef AudioInstruction

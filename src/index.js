@@ -1,4 +1,7 @@
 import css from "./css.js";
+import { getEvent, clipAudioBuffer } from "./funcs.js";
+
+import { GeneratedEvent, GeneratingEvent } from "./events.js";
 
 
 export default class VideoCreator extends HTMLElement {
@@ -9,7 +12,7 @@ export default class VideoCreator extends HTMLElement {
       <style>${css}</style>
 
       <canvas></canvas>
-      <div id="play-wrapper">
+      <div id="play-wrapper" hidden>
         <button
           id="play"
           type="button"
@@ -20,7 +23,7 @@ export default class VideoCreator extends HTMLElement {
         <input type="range" disabled value="0" step="1">
       </div>
 
-      <div id="download-wrapper">
+      <div id="download-wrapper" hidden>
         <button id="download" disabled>Download</button>
         <progress hidden></progress>
       </div>
@@ -130,8 +133,17 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
+  /**
+   * @type {{
+   *   width: number;
+   *   height: number;
+   *   frameRate: number;
+   * }?}
+   */
+  #currentVideo = null;
+
   /** @type {Worker?} */
-  #render = null;
+  #worker = null;
 
   /**
    * @type {(
@@ -145,18 +157,34 @@ export default class VideoCreator extends HTMLElement {
   get state() { return this.#state; }
   /**
    * render the video with the given worker
-   * @param {Worker} worker
+   * @param {Worker} [worker]
    */
   async render(worker) {
-    if (this.state !== "waiting") {
-      this.reset();
+    if (worker !== undefined) {
+      this.#worker = worker;
+      this.src = null;
+    } else if (this.#worker === null) {
+      if (this.src === null) throw new Error("No source file given.");
+
+      this.#worker = new Worker(new URL(this.src, location.href), {
+        type: "module",
+      });
     }
+    worker ??= this.#worker;
+    this.#worker ??= worker;
+
+
+    this.#currentVideo = {
+      width: this.width,
+      height: this.height,
+      frameRate: this.frameRate,
+    };
+
+
+    if (this.state !== "waiting") this.reset();
     this.#state = "rendering";
 
     this.dispatchEvent(new Event("rendering"));
-
-
-    this.#render = worker;
 
 
     worker.postMessage(/** @satisfies {import("./render").RenderInit} */ ({
@@ -169,7 +197,7 @@ export default class VideoCreator extends HTMLElement {
 
     worker.addEventListener(
       "message",
-      /** @param {MessageEvent<import("./render").RenderMessage>} event */
+      /** @param {MessageEvent<import("./render").FromRender>} event */
       async ({ data }) => {
         if (data.type !== "video request") return;
 
@@ -181,7 +209,7 @@ export default class VideoCreator extends HTMLElement {
         video.src = src;
 
 
-        await waitForEvent(video, "loadedmetadata");
+        await getEvent(video, "loadedmetadata");
 
 
         if (start) video.currentTime = start;
@@ -189,14 +217,14 @@ export default class VideoCreator extends HTMLElement {
         const { end = video.duration } = data;
 
 
-        await waitForEvent(video, "canplaythrough");
+        await getEvent(video, "canplaythrough");
 
 
         /** @type {ImageBitmap[]} */
         const frames = [];
 
         while (true) {
-          if (video.readyState < 2) await waitForEvent(video, "canplaythrough");
+          if (video.readyState < 2) await getEvent(video, "canplaythrough");
 
           frames.push(await createImageBitmap(video));
 
@@ -207,7 +235,7 @@ export default class VideoCreator extends HTMLElement {
         }
 
 
-        worker.postMessage(
+        worker?.postMessage(
           /** @satisfies {import("./render").VideoResponse} */ ({
             type: "video response",
             src,
@@ -224,25 +252,21 @@ export default class VideoCreator extends HTMLElement {
        * @param {(data: import("./render").RenderOutput | "abort") => void} resolve
        */
       resolve => {
-        /** @param {MessageEvent<import("./render").RenderMessage>} event */
+        /** @param {MessageEvent<import("./render").FromRender>} event */
         const resolution = ({ data }) => {
-          if (data?.type !== "output") return;
+          switch (data.type) {
+            default: return;
+            case "abort":
+            case "output":
+              break;
+          }
 
-          worker.removeEventListener("message", resolution);
-          this.removeEventListener("reset", abort);
-          resolve(data);
-        }
-        const abort = () => {
-          if (!this.#resetting) return;
-          this.#resetting = false;
-
-          worker.removeEventListener("message", resolution);
-          this.removeEventListener("reset", abort);
-          resolve("abort");
+          worker?.removeEventListener("message", resolution);
+          if (this.#resetting || data.type === "abort") resolve("abort");
+          else resolve(data)
         }
 
-        worker.addEventListener("message", resolution);
-        this.addEventListener("reset", abort);
+        worker?.addEventListener("message", resolution);
       },
     );
     if (signal === "abort") return;
@@ -297,9 +321,6 @@ export default class VideoCreator extends HTMLElement {
     this.#search.dispatchEvent(new Event("input"));
 
 
-    this.#render = null;
-
-
     this.#state = "rendered";
 
     this.dispatchEvent(new Event("rendered"));
@@ -311,8 +332,13 @@ export default class VideoCreator extends HTMLElement {
     this.#disabled = true;
 
 
-    this.#render?.terminate();
-    this.#render = null;
+    this.#worker?.postMessage(/** @type {import("./render").AbortSignal} */ ({
+      type: "abort",
+    }));
+    if (this.#state === "rendering") this.#resetting = true;
+
+
+    this.#currentVideo = null;
 
 
     this.#ctx.clearRect(0, 0, this.#preview.width, this.#preview.height);
@@ -325,7 +351,6 @@ export default class VideoCreator extends HTMLElement {
     this.#state = "waiting";
 
 
-    this.#resetting = true;
     this.dispatchEvent(new Event("reset"));
   }
 
@@ -377,7 +402,7 @@ export default class VideoCreator extends HTMLElement {
   set frameRate(value) { this.setAttribute("framerate", `${value}`); }
 
   get controls() {
-    const controls = this.getAttribute("controls") ?? "";
+    const controls = this.getAttribute("controls") ?? "none";
     return new Set(["none", "play", "download"]).has(controls)
       ? /** @type {"none" | "play" | "download"} */ (controls)
       : "all";
@@ -610,10 +635,10 @@ export default class VideoCreator extends HTMLElement {
     }
 
 
-    await waitForEvent(paint, "message");
+    await getEvent(paint, "message");
     recorder.stop();
 
-    await waitForEvent(recorder, "stop");
+    await getEvent(recorder, "stop");
 
 
     if (consuming) this.#progress.hidden = true;
@@ -668,6 +693,15 @@ export default class VideoCreator extends HTMLElement {
 
 
     switch (name) {
+      case "src":
+        if (newValue !== null) {
+          this.render();
+          return;
+        }
+
+        this.reset();
+        this.#worker = null;
+        return;
       case "width":
         this.#preview.width = this.width;
         break;
@@ -683,18 +717,16 @@ export default class VideoCreator extends HTMLElement {
     }
 
 
-    if (this.src === null) {
-      if (name !== "src" && this.state !== "waiting") this.reset();
-      return;
-    }
-
-
-    this.render(new Worker(
-      new URL(this.src, location.href),
-      { type: "module" },
-    ));
+    if (
+      this.#currentVideo?.width === this.width
+      && this.#currentVideo?.height === this.height
+      && this.#currentVideo?.frameRate === this.frameRate
+      || this.state === "waiting"
+    ) return;
+    this.render();
   }
 }
+
 
 /**
  * @exports
@@ -710,80 +742,7 @@ export default class VideoCreator extends HTMLElement {
  *   timeupdate: Event;
  *   reset: Event;
  * }} VideoCreatorEventMap
- * 
- * 
- * @typedef {EventInit & { consuming?: boolean }} GeneratingEventInit
- * @typedef {EventInit & { video: Blob }} GeneratedEventInit
  */
 
 
-export class GeneratingEvent extends Event {
-  /**
-   * @param {string} type
-   * @param {GeneratingEventInit} eventInitDict
-   */
-  constructor(type, eventInitDict) {
-    super(type, eventInitDict);
-
-
-    /** whether or not the video is being consumed */
-    this.consuming = eventInitDict.consuming ?? true;
-  }
-}
-export class GeneratedEvent extends Event {
-  /**
-   * @param {string} type
-   * @param {GeneratedEventInit} eventInitDict
-   */
-  constructor(type, eventInitDict) {
-    super(type, eventInitDict);
-
-
-    /** the generated video */
-    this.video = eventInitDict.video;
-  }
-}
-
-
-/**
- * @param {EventTarget} target
- * @param {string} eventName
- * @returns {Promise<Event>}
- */
-function waitForEvent(target, eventName) {
-  /** @param {(value: Event) => void} resolve */
-  return new Promise(resolve => {
-    /** @param {Event} event */
-    const resolution = event => {
-      resolve(event);
-
-
-      target.removeEventListener(eventName, resolution);
-    }
-    target.addEventListener(eventName, resolution);
-  });
-}
-
-
-/**
- * @param {AudioBuffer} buffer
- * @param {number} start - when to clip off the start, in seconds
- */
-function clipAudioBuffer(buffer, start) {
-  const startPos = start * buffer.sampleRate;
-
-  const newBuffer = new AudioBuffer({
-    numberOfChannels: buffer.numberOfChannels,
-    length: buffer.length - startPos,
-    sampleRate: buffer.sampleRate,
-  });
-
-  for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-    const data = new Float32Array(buffer.length - startPos);
-    buffer.copyFromChannel(data, channel, startPos);
-    newBuffer.copyToChannel(data, channel);
-  }
-
-
-  return newBuffer;
-}
+export * from "./events.js";
