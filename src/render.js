@@ -10,7 +10,7 @@ export default class VideoSrc {
    */
   constructor({ canvas, frameRate }) {
     /** the canvas to draw on */
-    this.canvas = canvas;
+    this.#canvas = canvas;
 
 
     /** the framerate of the video */
@@ -22,6 +22,9 @@ export default class VideoSrc {
 
   #frame = 0;
   get frame() { return this.#frame; }
+
+  #canvas;
+  get canvas() { return this.#canvas; }
 
 
   /** the time, in seconds, that the video is at */
