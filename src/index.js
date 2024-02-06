@@ -247,6 +247,7 @@ export default class VideoCreator extends HTMLElement {
     );
 
 
+    console.log("awaiting response")
     const signal = await new Promise(
       /**
        * @param {(data: import("./render").RenderOutput | "abort") => void} resolve
@@ -257,18 +258,22 @@ export default class VideoCreator extends HTMLElement {
           switch (data.type) {
             default: return;
             case "abort":
+              if (this.#resetting === 0) return;
             case "output":
               break;
           }
 
           worker?.removeEventListener("message", resolution);
-          if (this.#resetting || data.type === "abort") resolve("abort");
-          else resolve(data)
+          if (this.#resetting > 0) {
+            this.#resetting--;
+            resolve("abort");
+          } else resolve(/** @type {import("./render").RenderOutput} */ (data));
         }
 
         worker?.addEventListener("message", resolution);
       },
     );
+    console.log(signal)
     if (signal === "abort") return;
 
     const { frames, audioInstructions } = signal;
@@ -326,7 +331,7 @@ export default class VideoCreator extends HTMLElement {
     this.dispatchEvent(new Event("rendered"));
   }
 
-  #resetting = false;
+  #resetting = 0;
   /** reset the VideoCreator to waiting */
   reset() {
     this.#disabled = true;
@@ -335,7 +340,7 @@ export default class VideoCreator extends HTMLElement {
     this.#worker?.postMessage(/** @type {import("./render").AbortSignal} */ ({
       type: "abort",
     }));
-    if (this.#state === "rendering") this.#resetting = true;
+    if (this.#state === "rendering") this.#resetting++;
 
 
     this.#currentVideo = null;
