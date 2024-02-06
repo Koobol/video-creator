@@ -1,5 +1,8 @@
 /**
  * @exports
+ * 
+ * 
+ * 
  * @typedef PaintInit
  * @prop {ImageBitmap[]} frames
  * @prop {OffscreenCanvas} offscreen
@@ -45,13 +48,14 @@ self.addEventListener(
       if (!warned && Date.now() - last > interval) {
         console.warn("Video file rendering not able to " +
                      "keep up with requested framerate.");
+        postMessage("warn");
 
         warned = true;
       }
 
 
       if (frame >= frames.length - 1) {
-        postMessage(null);
+        postMessage("done");
         break;
       }
     }

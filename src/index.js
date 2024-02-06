@@ -247,14 +247,13 @@ export default class VideoCreator extends HTMLElement {
     );
 
 
-    console.log("awaiting response")
     const signal = await new Promise(
       /**
        * @param {(data: import("./render").RenderOutput | "abort") => void} resolve
        */
       resolve => {
         /** @param {MessageEvent<import("./render").FromRender>} event */
-        const resolution = ({ data }) => {
+        const onMessage = ({ data }) => {
           switch (data.type) {
             default: return;
             case "abort":
@@ -263,17 +262,16 @@ export default class VideoCreator extends HTMLElement {
               break;
           }
 
-          worker?.removeEventListener("message", resolution);
+          worker?.removeEventListener("message", onMessage);
           if (this.#resetting > 0) {
             this.#resetting--;
             resolve("abort");
           } else resolve(/** @type {import("./render").RenderOutput} */ (data));
         }
 
-        worker?.addEventListener("message", resolution);
+        worker?.addEventListener("message", onMessage);
       },
     );
-    console.log(signal)
     if (signal === "abort") return;
 
     const { frames, audioInstructions } = signal;
@@ -640,7 +638,23 @@ export default class VideoCreator extends HTMLElement {
     }
 
 
-    await getEvent(paint, "message");
+    await new Promise(resolve => {
+      /** @param {MessageEvent<"done" | "warn">} event */
+      const onMessage = ({ data }) => {
+        switch (data) {
+          case "done":
+            resolve(null);
+            paint.removeEventListener("message", onMessage);
+            break;
+          case "warn":
+            this.dispatchEvent(new Event("slowframerate"));
+            break;
+        }
+      }
+
+
+      paint.addEventListener("message", onMessage);
+    });
     recorder.stop();
 
     await getEvent(recorder, "stop");
@@ -746,6 +760,7 @@ export default class VideoCreator extends HTMLElement {
  *   seeked: Event;
  *   timeupdate: Event;
  *   reset: Event;
+ *   slowframerate: Event;
  * }} VideoCreatorEventMap
  */
 
