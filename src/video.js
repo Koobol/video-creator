@@ -44,6 +44,10 @@ export default class Video {
     this.pause();
   }
 
+  /** the current time of the video, in seconds */
+  get currentTime() { return this.frame / this.#videoSrc.frameRate; }
+  set currentTime(time) { this.frame = time * this.#videoSrc.frameRate; }
+
   get playing() { return Boolean(this.#audio); }
   
   play() {
