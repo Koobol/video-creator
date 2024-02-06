@@ -79,11 +79,8 @@ export default class VideoSrc {
    */
   stopSound(sound) {
     const instruction = this.#sounds.get(sound);
-
-    if (instruction?.stop !== undefined)
-      throw new Error("A sound can only be stopped once.");
-
-    if (instruction) instruction.stop = this.frame / this.frameRate;
+    if (instruction && instruction.stop === undefined)
+      instruction.stop = this.frame / this.frameRate;
   }
 
   /** @type {Map<symbol, AudioInstruction>} */
