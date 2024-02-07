@@ -31,7 +31,7 @@ export default class Video {
     this.#videoSrc = videoSrc;
 
 
-    Video.videos.push(this);
+    Video.videos.get(videoSrc)?.push(this);
   }
 
 
@@ -72,6 +72,6 @@ export default class Video {
   get height() { return this.#frames[0].height; }
 
 
-  /** @type {Video[]} */
-  static videos = [];
+  /** @type {WeakMap<import("./render").default, Video[]>} */
+  static videos = new WeakMap();
 }

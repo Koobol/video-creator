@@ -157,6 +157,7 @@ export default class VideoSrc {
 
 
     const videoSrc = new this({ canvas, frameRate });
+    Video.videos.set(videoSrc, []);
 
 
     /** @type {RenderOutput["frames"]} */
@@ -193,8 +194,8 @@ export default class VideoSrc {
       videoSrc.#frame++;
       
 
-      for (const video of Video.videos.filter(video => video.playing))
-        video.frame++;
+      Video.videos.get(videoSrc)?.filter(video => video.playing)
+        .forEach((video) => { video.frame++; });
     }
 
 
@@ -205,6 +206,9 @@ export default class VideoSrc {
     }), { transfer: frames });
   }
 }
+
+
+export { default as Video } from "./video.js";
 
 
 /**
