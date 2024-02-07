@@ -144,6 +144,7 @@ export default class VideoCreator extends HTMLElement {
 
   /** @type {Worker?} */
   #worker = null;
+  get worker() { return this.#worker; }
 
   /**
    * @type {(
