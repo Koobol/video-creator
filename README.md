@@ -9,7 +9,7 @@ First, create a new Javascript file. This file will be used to define how the vi
 
 To actually view your video, import `video-creator` and define its default export as a custom element. Then put the custom elment on the page, and either give it an `src` attribute with the URL of your file (in which case when using a bundler you will have to specify the file as an entry point), or call the `render()` method on the custom element with a dedicated worker of your file. You may also give your custom element `width`, `height`, and `framerate` attributes. On the browser your video will then be rendered, and when it is complete you will be able to preview it on the custom element, and when you are satisfied with it you can hit the download button to generate a video file.
 
-See [the wiki]() for a full reference of the API.
+See [the wiki](https://github.com/Koobol/video-creator/wiki) for a full reference of the API.
 
 ### Example
 example.js
