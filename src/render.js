@@ -109,7 +109,7 @@ export default class VideoSrc {
     const { frames } = await getMessage("video response");
 
 
-    return new Video(frames, src, this, start);
+    return new Video(frames, src, this, this.#key, start);
   }
 
 
@@ -195,16 +195,19 @@ export default class VideoSrc {
       
 
       Video.videos.get(videoSrc)?.filter(video => video.playing)
-        .forEach((video) => { video.frame++; });
+        .forEach((video) => { video.nextFrame(videoSrc.#key); });
     }
 
 
-    postMessage(/** @satisfies {RenderOutput} */({
+    postMessage(/** @satisfies {RenderOutput} */ ({
       type: "output",
       frames,
       audioInstructions: videoSrc.#audioInstructions,
     }), { transfer: frames });
   }
+
+
+  #key = Symbol("VideoSrc Video key");
 }
 
 

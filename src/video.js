@@ -10,16 +10,18 @@ export default class Video {
   #startAt;
 
   #videoSrc;
+  #key;
 
   /**
    * @param {ImageBitmap[]} frames
    * @param {string} src
    *   - the source of the video's audio, usually the video file
    * @param {import("./render").default} videoSrc
+   * @param {symbol} key
    * @param {number} [startAt]
    *   - how offset the video is from its audio, in seconds
    */
-  constructor(frames, src, videoSrc, startAt = 0) {
+  constructor(frames, src, videoSrc, key, startAt = 0) {
     this.#frames = frames;
 
 
@@ -30,6 +32,8 @@ export default class Video {
 
     this.#videoSrc = videoSrc;
 
+    this.#key = key;
+
 
     Video.videos.get(videoSrc)?.push(this);
   }
@@ -39,6 +43,21 @@ export default class Video {
   set frame(value) {
     this.#frame = Math.min(value, this.#frames.length - 1);
 
+
+    this.pause();
+  }
+
+
+  /**
+   * only to be used by internals
+   * @param {symbol} key
+   */
+  nextFrame(key) {
+    if (key !== this.#key) return;
+
+
+    this.#frame++;
+    
 
     if (this.#frame < this.#frames.length - 1) return;
     this.pause();
