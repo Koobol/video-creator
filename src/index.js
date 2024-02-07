@@ -117,7 +117,7 @@ export default class VideoCreator extends HTMLElement {
     });
 
     this.#download.addEventListener("click", async () => {
-      const video = await this.generateVideo();
+      const video = await this.generateVideo(true);
 
 
       const a = document.createElement("a");
@@ -567,7 +567,7 @@ export default class VideoCreator extends HTMLElement {
    * @param {boolean} [consuming]
    *   - whether or not to consume the video for performance
    */
-  async generateVideo(consuming = true) {
+  async generateVideo(consuming = false) {
     if (this.#frames === null) throw new Error("Video isn't rendered yet");
 
 
