@@ -52,6 +52,8 @@ export default class VideoCreator extends HTMLElement {
   #audioCtx = null;
   /** @type {MediaStreamAudioDestinationNode?} */
   #audioStream = null;
+  /** @type {GainNode?} */
+  #volumeNode = null;
   /** @type {AudioBufferSourceNode?} */
   #playing = null;
 
@@ -415,6 +417,28 @@ export default class VideoCreator extends HTMLElement {
   }
   set controls(value) { this.setAttribute("controls", value); }
 
+  get muted() { return this.hasAttribute("muted"); }
+  set muted(muted) {
+    if (muted === this.muted) return;
+
+    if (muted) this.setAttribute("muted", "");
+    else this.removeAttribute("muted");
+  }
+
+  #volume = 1;
+  get volume() { return this.#volume; }
+  set volume(volume) {
+    if (volume < 0) return;
+
+
+    this.#volume = volume;
+
+    if (volume !== 0) this.muted = false;
+    else this.muted = true;
+
+    if (this.#volumeNode) this.#volumeNode.gain.value = volume;
+  }
+
 
   /** @type {number=} */
   #playTimeout;
@@ -487,8 +511,12 @@ export default class VideoCreator extends HTMLElement {
     );
 
     this.#playing = new AudioBufferSourceNode(this.#audioCtx, { buffer });
-    this.#playing.connect(this.#audioCtx.destination);
-    this.#playing.connect(this.#audioStream);
+
+    this.#volumeNode = new GainNode(this.#audioCtx, { gain: this.volume });
+    this.#playing.connect(this.#volumeNode);
+
+    this.#volumeNode.connect(this.#audioCtx.destination);
+    this.#volumeNode.connect(this.#audioStream);
     this.#playing.start(0);
   }
 
@@ -763,6 +791,7 @@ export default class VideoCreator extends HTMLElement {
     "height",
     "framerate",
     "controls",
+    "muted",
   ]); }
   /**
    * @param {typeof VideoCreator["observedAttributes"][number]} name
@@ -794,6 +823,10 @@ export default class VideoCreator extends HTMLElement {
           this.controls !== "all" && this.controls !== "play";
         this.#downloadWrapper.hidden =
           this.controls !== "all" && this.controls !== "download";
+        return;
+      case "muted":
+        if (newValue === null) this.volume = this.volume || 1;
+        else this.volume = 0;
         return;
     }
 
