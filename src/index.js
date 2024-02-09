@@ -50,6 +50,8 @@ export default class VideoCreator extends HTMLElement {
 
   /** @type {AudioContext?} */
   #audioCtx = null;
+  /** @type {MediaStreamAudioDestinationNode?} */
+  #audioStream = null;
   /** @type {AudioBufferSourceNode?} */
   #playing = null;
 
@@ -423,7 +425,10 @@ export default class VideoCreator extends HTMLElement {
     if (this.#frames === null || this.#audio === null) return;
 
 
-    if (this.#audioCtx === null) this.#audioCtx = new AudioContext();
+    if (this.#audioCtx === null || this.#audioStream === null) {
+      this.#audioCtx = new AudioContext();
+      this.#audioStream = this.#audioCtx.createMediaStreamDestination();
+    }
 
 
     this.dispatchEvent(new Event("play"));
@@ -483,6 +488,7 @@ export default class VideoCreator extends HTMLElement {
 
     this.#playing = new AudioBufferSourceNode(this.#audioCtx, { buffer });
     this.#playing.connect(this.#audioCtx.destination);
+    this.#playing.connect(this.#audioStream);
     this.#playing.start(0);
   }
 
@@ -706,6 +712,19 @@ export default class VideoCreator extends HTMLElement {
       Math.floor(start * this.frameRate),
       Math.ceil(end * this.frameRate),
     ));
+  }
+
+  getStream() {
+    if (this.#audioCtx === null || this.#audioStream === null) {
+      this.#audioCtx = new AudioContext();
+      this.#audioStream = this.#audioCtx.createMediaStreamDestination();
+    }
+
+
+    return new MediaStream([
+      ...this.#preview.captureStream().getTracks(),
+      ...this.#audioStream.stream.getTracks(),
+    ]);
   }
 
 
