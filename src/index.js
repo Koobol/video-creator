@@ -714,7 +714,11 @@ export default class VideoCreator extends HTMLElement {
     ));
   }
 
-  getStream() {
+  /**
+   * capture a stream of the video preview
+   * @param {number} [frameRequestRate]
+   */
+  captureStream(frameRequestRate) {
     if (this.#audioCtx === null || this.#audioStream === null) {
       this.#audioCtx = new AudioContext();
       this.#audioStream = this.#audioCtx.createMediaStreamDestination();
@@ -722,7 +726,7 @@ export default class VideoCreator extends HTMLElement {
 
 
     return new MediaStream([
-      ...this.#preview.captureStream().getTracks(),
+      ...this.#preview.captureStream(frameRequestRate).getTracks(),
       ...this.#audioStream.stream.getTracks(),
     ]);
   }
