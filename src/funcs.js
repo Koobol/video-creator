@@ -86,18 +86,20 @@ export function getEvent(target, eventName) {
 /**
  * @param {AudioBuffer} buffer
  * @param {number} start - when to clip off the start, in seconds
+ * @param {number} [end] - when to clip off the end, in seconds
  */
-export function clipAudioBuffer(buffer, start) {
-  const startPos = start * buffer.sampleRate;
+export function clipAudioBuffer(buffer, start, end = buffer.duration) {
+  const startPos = Math.floor(start * buffer.sampleRate);
+  const length = Math.ceil(end * buffer.sampleRate - startPos);
 
   const newBuffer = new AudioBuffer({
     numberOfChannels: buffer.numberOfChannels,
-    length: buffer.length - startPos,
+    length,
     sampleRate: buffer.sampleRate,
   });
 
   for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-    const data = new Float32Array(buffer.length - startPos);
+    const data = new Float32Array(length);
     buffer.copyFromChannel(data, channel, startPos);
     newBuffer.copyToChannel(data, channel);
   }

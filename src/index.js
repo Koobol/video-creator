@@ -284,7 +284,7 @@ export default class VideoCreator extends HTMLElement {
     // compile audioInstructions
     const audioCtx = new OfflineAudioContext(
       1,
-      frames.length / this.frameRate * 44100,
+      (frames.length - 1) / this.frameRate * 44100,
       44100,
     );
 
@@ -559,7 +559,7 @@ export default class VideoCreator extends HTMLElement {
     if (this.#frames === null) return null;
 
 
-    return (this.#frames.length - 1) / this.frameRate;
+    return (this.#frames.length) / this.frameRate;
   }
 
 
@@ -668,6 +668,44 @@ export default class VideoCreator extends HTMLElement {
 
     this.dispatchEvent(new GeneratedEvent("generated", { video }));
     return video;
+  }
+
+
+  /**
+   * get the audio of the video
+   * @param {number} [start] - where to start getting the audio from, in seconds
+   * @param {number} [end] - where to stop getting the audio from, in seconds
+   */
+  getAudio(start = 0, end = this.#audio?.duration ?? 0) {
+    if (!this.#audio) return null;
+
+    start = Math.max(0, start);
+    end = Math.min(this.#audio.duration, end);
+
+    if (start >= end) end = start;
+
+    
+    return clipAudioBuffer(this.#audio, start, end);
+  }
+
+  /**
+   * get the frames of the video
+   * @param {number} [start] - where to start getting the frames from, in seconds
+   * @param {number} [end] - where to stop getting the frames from, in seconds
+   */
+  getFrames(start = 0, end = this.length ?? 0) {
+    if (!this.#frames || !this.length) return null;
+
+    start = Math.max(0, start);
+    end = Math.min(this.length, end);
+
+    if (start >= end) end = start;
+    
+    
+    return structuredClone(this.#frames.slice(
+      Math.floor(start * this.frameRate),
+      Math.ceil(end * this.frameRate),
+    ));
   }
 
 
