@@ -512,7 +512,7 @@ export default class VideoCreator extends HTMLElement {
 
     this.#playing = new AudioBufferSourceNode(this.#audioCtx, { buffer });
 
-    this.#volumeNode = new GainNode(this.#audioCtx, { gain: this.volume });
+    this.#volumeNode ??= new GainNode(this.#audioCtx, { gain: this.volume });
     this.#playing.connect(this.#volumeNode);
 
     this.#volumeNode.connect(this.#audioCtx.destination);
