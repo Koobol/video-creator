@@ -329,6 +329,9 @@ export default class VideoCreator extends HTMLElement {
     this.#search.dispatchEvent(new Event("input"));
 
 
+    if (this.autoplay) this.play();
+
+
     this.#state = "rendered";
 
     this.dispatchEvent(new Event("rendered"));
@@ -449,10 +452,8 @@ export default class VideoCreator extends HTMLElement {
     if (this.#frames === null || this.#audio === null) return;
 
 
-    if (this.#audioCtx === null || this.#audioStream === null) {
-      this.#audioCtx = new AudioContext();
-      this.#audioStream = this.#audioCtx.createMediaStreamDestination();
-    }
+    this.#audioCtx ??= new AudioContext();
+    this.#audioStream ??= this.#audioCtx.createMediaStreamDestination();
 
 
     this.dispatchEvent(new Event("play"));
@@ -538,8 +539,16 @@ export default class VideoCreator extends HTMLElement {
     this.#playing?.stop();
   }
 
-  get playing() { return this.#audioCtx?.state === "running"; }
+  get playing() { return this.#playTimeout !== undefined; }
 
+
+  get autoplay() { return this.hasAttribute("autoplay"); }
+  set autoplay(autoplay) {
+    if (autoplay === this.autoplay) return;
+
+    if (autoplay) this.setAttribute("autoplay", "");
+    else this.removeAttribute("autoplay");
+  }
 
   get frame() { return this.#search.valueAsNumber; }
   /**
@@ -747,10 +756,8 @@ export default class VideoCreator extends HTMLElement {
    * @param {number} [frameRequestRate]
    */
   captureStream(frameRequestRate) {
-    if (this.#audioCtx === null || this.#audioStream === null) {
-      this.#audioCtx = new AudioContext();
-      this.#audioStream = this.#audioCtx.createMediaStreamDestination();
-    }
+    this.#audioCtx ??= new AudioContext();
+    this.#audioStream ??= this.#audioCtx.createMediaStreamDestination();
 
 
     return new MediaStream([
