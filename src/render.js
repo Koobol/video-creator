@@ -28,7 +28,7 @@ export default class VideoSrc {
 
 
   /** the time, in seconds, that the video is at */
-  get currentTime() { return this.#frame / this.#frameRate; }
+  get currentTime() { return this.frame / this.frameRate; }
 
 
   /**
@@ -77,7 +77,7 @@ export default class VideoSrc {
 
     /** @satisfies {AudioInstruction} */
     const instruction = {
-      timestamp: this.frame / this.frameRate,
+      timestamp: this.currentTime,
       startAt,
       volume,
     };
@@ -100,13 +100,28 @@ export default class VideoSrc {
   #audioInstructions = new Map();
 
   /**
+   * change the volume of the given sound
+   * @param {symbol} sound
+   * @param {number} volume - the new volume
+   */
+  changeVolume(sound, volume) {
+    const instruction = this.#sounds.get(sound);
+    if (!instruction) return;
+
+    if (!instruction.volumeChanges) instruction.volumeChanges = new Map();
+
+
+    instruction.volumeChanges.set(this.currentTime, volume);
+  }
+
+  /**
    * pause the given sound
    * @param {symbol} sound
    */
   stopSound(sound) {
     const instruction = this.#sounds.get(sound);
     if (instruction && instruction.stop === undefined)
-      instruction.stop = this.frame / this.frameRate;
+      instruction.stop = this.currentTime;
   }
 
   /** @type {Map<symbol, AudioInstruction>} */
@@ -282,11 +297,12 @@ export { default as Video } from "./video.js";
  * @prop {number} [stop] - the timestamp when to stop the sound
  * @prop {number} [startAt] - when to start playing the sound from
  * @prop {number} [volume] - the volume of the sound
+ * @prop {Map<number, number>} [volumeChanges] - changes in the volume
  *
  * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
  *
  *
  * @typedef PlaySoundOptions
- * @prop {number} [startAt]
- * @prop {number} [volume]
+ * @prop {number} [startAt] - when to start playing the sound from
+ * @prop {number} [volume] - the volume of the sound
  */
