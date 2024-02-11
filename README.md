@@ -17,13 +17,13 @@ example.js
 import VideoSrc from "video-creator/render";
 
 (class extends VideoSrc {
+  ctx = this.canvas.getContext("2d");
+  
+  rectX = 0;
+
+
   setup() {
-    this.ctx = this.canvas.getContext("2d");
-
     this.ctx.fillStyle = "blue";
-
-
-    this.rectX = 0;
   }
 
   draw() {
