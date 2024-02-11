@@ -667,8 +667,6 @@ export default class VideoCreator extends HTMLElement {
 
 
     if (consuming) {
-      this.#disabled = true;
-
       this.#progress.max = this.#frames.length / this.frameRate * 1000;
       this.#progress.value = 0;
 
