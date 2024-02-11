@@ -431,6 +431,7 @@ export default class VideoCreator extends HTMLElement {
   #volume = 1;
   get volume() { return this.#volume; }
   set volume(volume) {
+    // change in next major update
     if (volume < 0) return;
 
 
@@ -602,7 +603,7 @@ export default class VideoCreator extends HTMLElement {
     if (this.#frames === null) return null;
 
 
-    return (this.#frames.length) / this.frameRate;
+    return (this.#frames.length - 1) / this.frameRate;
   }
 
 
