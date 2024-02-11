@@ -44,16 +44,42 @@ export default class VideoSrc {
 
 
   /**
+   * @overload
    * play the requested sound
    * @param {string | URL} src - the file containing the sound
-   * @param {number} [startAt] - when to start playing the sound from
-   * @returns {symbol} - a key which can be used to manipulate the sound
+   * @param {PlaySoundOptions} [options]
+   *   - the options of the sound
+   * @returns {symbol} a key which can be used to manipulate the sound
+   *
+   * @overload
+   * play the requested sound
+   * @param {string | URL} src - the file containing the sound
+   * @param {number} [startAt]
+   *   - when to start playing the sound from
+   * @returns {symbol} a key which can be used to manipulate the sound
+   *
+   *
+   * @method
+   * play the requested sound
+   * @param {string | URL} src
+   * @param {number | PlaySoundOptions} [startAtOrOptions]
+   * @returns {symbol}
    */
-  playSound(src, startAt) {
+  playSound(src, startAtOrOptions) {
+    /** @type {PlaySoundOptions["startAt"]} */
+    let startAt;
+    /** @type {PlaySoundOptions["volume"]} */
+    let volume;
+    if (typeof startAtOrOptions === "object")
+      ({ startAt, volume } = startAtOrOptions);
+    else startAt = startAtOrOptions;
+
+
     /** @satisfies {AudioInstruction} */
     const instruction = {
       timestamp: this.frame / this.frameRate,
       startAt,
+      volume,
     };
 
 
@@ -121,8 +147,8 @@ export default class VideoSrc {
 
 
   /**
-   * function that will be called for every frame
-   * return true when to finish rendering
+   * function that will be called for every frame,
+   * return true to finish rendering
    * @abstract
    * @returns {boolean | Promise<boolean>}
    */
@@ -255,6 +281,12 @@ export { default as Video } from "./video.js";
  * @prop {number} timestamp - the time that the sound starts playing in seconds
  * @prop {number} [stop] - the timestamp when to stop the sound
  * @prop {number} [startAt] - when to start playing the sound from
+ * @prop {number} [volume] - the volume of the sound
  *
  * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
+ *
+ *
+ * @typedef PlaySoundOptions
+ * @prop {number} [startAt]
+ * @prop {number} [volume]
  */
