@@ -39,6 +39,20 @@ export default class Video {
   }
 
 
+  #volume = 1;
+  get volume() { return this.#volume; }
+  set volume(volume) {
+    if (volume < 0) volume = 0;
+
+
+    this.#volume = volume;
+
+
+    if (!this.#audio) return;
+    this.#videoSrc.changeVolume(this.#audio, volume);
+  }
+
+
   get frame() { return this.#frame; }
   set frame(value) {
     this.#frame = Math.min(value, this.#frames.length - 1);
@@ -72,10 +86,10 @@ export default class Video {
   play() {
     if (this.playing) return;
 
-    this.#audio = this.#videoSrc.playSound(
-      this.#src,
-      this.#startAt + this.frame / this.#videoSrc.frameRate,
-    );
+    this.#audio = this.#videoSrc.playSound(this.#src, {
+      startAt: this.#startAt + this.frame / this.#videoSrc.frameRate,
+      volume: this.volume,
+    });
   }
   pause() {
     if (!this.#audio) return;
