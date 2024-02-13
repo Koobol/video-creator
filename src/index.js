@@ -414,7 +414,7 @@ export default class VideoCreator extends HTMLElement {
 
   get frameRate() {
     const framerateAttr = Number(this.getAttribute("framerate"));
-    return !isNaN(framerateAttr) && framerateAttr >= 0 ? framerateAttr : 30;
+    return !isNaN(framerateAttr) && framerateAttr > 0 ? framerateAttr : 30;
   }
   set frameRate(value) { this.setAttribute("framerate", `${value}`); }
 
