@@ -253,6 +253,7 @@ export default class VideoSrc {
 
 
 export { default as Video } from "./video.js";
+export { default as Sound } from "./sound.js";
 
 
 /**
