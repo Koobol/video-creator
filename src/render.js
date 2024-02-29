@@ -1,4 +1,4 @@
-import Video from "./video.js";
+import Video, { videos } from "./video.js";
 import { sleep, getMessage } from "./funcs.js";
 
 
@@ -198,7 +198,7 @@ export default class VideoSrc {
 
 
     const videoSrc = new this({ canvas, frameRate });
-    Video.videos.set(videoSrc, []);
+    videos.set(videoSrc, []);
 
 
     /** @type {RenderOutput["frames"]} */
@@ -235,7 +235,7 @@ export default class VideoSrc {
       videoSrc.#frame++;
       
 
-      Video.videos.get(videoSrc)?.filter(video => video.playing)
+      videos.get(videoSrc)?.filter(video => video.playing)
         .forEach((video) => { video.nextFrame(videoSrc.#key); });
     }
 

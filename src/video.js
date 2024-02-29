@@ -35,7 +35,7 @@ export default class Video {
     this.#key = key;
 
 
-    Video.videos.get(videoSrc)?.push(this);
+    videos.get(videoSrc)?.push(this);
   }
 
 
@@ -103,8 +103,8 @@ export default class Video {
 
   get width() { return this.#frames[0].width; }
   get height() { return this.#frames[0].height; }
-
-
-  /** @type {WeakMap<import("./render").default, Video[]>} */
-  static videos = new WeakMap();
 }
+
+
+/** @type {WeakMap<import("./render").default, Video[]>} */
+export const videos = new WeakMap();
