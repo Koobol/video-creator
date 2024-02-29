@@ -35,7 +35,7 @@ export default class Video {
     this.#key = key;
 
 
-    videos.get(videoSrc)?.push(this);
+    videos.get(videoSrc)?.add(this);
   }
 
 
@@ -106,5 +106,5 @@ export default class Video {
 }
 
 
-/** @type {WeakMap<import("./render").default, Video[]>} */
+/** @type {WeakMap<import("./render").default, Set<Video>>} */
 export const videos = new WeakMap();

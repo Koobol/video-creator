@@ -6,26 +6,38 @@ export default class Sound {
    * @param {string | URL} src
    * @param {SoundOptions} [options]
    */
-  constructor(videoSrc, src, { startAt = 0, volume } = {}) {
-    sounds.get(videoSrc)?.push(this);
+  constructor(videoSrc, src, { startAt = 0, volume = 1 } = {}) {
+    sounds.get(videoSrc)?.add(this);
 
     this.#src = src;
 
-    this.#timestamp = videoSrc.currentTime;
+    this.#startingTime = videoSrc.currentTime;
     this.#startAt = startAt;
-    this.#volume = volume;
+    this.#startingVolume = volume;
   }
-  #timestamp;
+
+  #startingTime;
+  /** the time at which the sound starts playing */
+  get startingTime() { return this.#startingTime; }
+
   #startAt;
-  #volume;
+  /** when the sound starts playing from */
+  get startAt() { return this.#startAt; }
 
   #src;
   /** the source of the video */
   get src() { return this.#src; }
+
+  #startingVolume;
+  /**
+   * get the volume of the sound at the specified time
+   * @param {number} time
+   */
+  getVolumeAt(time) { return this.#startingVolume; }
 }
 
 
-/** @type {WeakMap<VideoSrc, Sound[]>} */
+/** @type {WeakMap<VideoSrc, Set<Sound>>} */
 export const sounds = new WeakMap();
 
 

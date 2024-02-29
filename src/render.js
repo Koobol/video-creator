@@ -16,6 +16,10 @@ export default class VideoSrc {
 
     /** the framerate of the video */
     this.#frameRate = frameRate;
+
+
+    videos.set(this, []);
+    sounds.set(this, []);
   }
 
   #frameRate;
@@ -77,8 +81,8 @@ export default class VideoSrc {
    */
   stopSound(sound) {
     const instruction = this.#sounds.get(sound);
-    if (instruction && instruction.stop === undefined)
-      instruction.stop = this.currentTime;
+    if (instruction && instruction.stopTime === undefined)
+      instruction.stopTime = this.currentTime;
   }
 
   /** @type {Map<symbol, AudioInstruction>} */
@@ -155,7 +159,6 @@ export default class VideoSrc {
 
 
     const videoSrc = new this({ canvas, frameRate });
-    videos.set(videoSrc, []);
 
 
     /** @type {RenderOutput["frames"]} */
@@ -192,15 +195,34 @@ export default class VideoSrc {
       videoSrc.#frame++;
       
 
-      videos.get(videoSrc)?.filter(video => video.playing)
-        .forEach((video) => { video.nextFrame(videoSrc.#key); });
+      videos.get(videoSrc)?.forEach((video) => {
+        if (!video.playing) return;
+
+        video.nextFrame(videoSrc.#key);
+      });
     }
+
+
+    /** @type {AudioInstructions} */
+    const audioInstructions = new Map();
+    sounds.get(videoSrc)?.forEach(sound => {
+      const src = typeof sound.src === "string" ? sound.src : sound.src.href;
+
+      if (!audioInstructions.has(src)) audioInstructions.set(src, new Set());
+
+
+      audioInstructions.get(src)?.add({
+        startTime: sound.startingTime,
+        startAt: sound.startAt,
+        startingVolume: sound.getVolumeAt(sound.startingTime),
+      });
+    });
 
 
     postMessage(/** @satisfies {RenderOutput} */ ({
       type: "output",
       frames,
-      audioInstructions: videoSrc.#audioInstructions,
+      audioInstructions,
     }), { transfer: frames });
   }
 
@@ -251,10 +273,11 @@ export { default as Sound } from "./sound.js";
  * 
  * 
  * @typedef AudioInstruction
- * @prop {number} timestamp - the time that the sound starts playing in seconds
- * @prop {number} [stop] - the timestamp when to stop the sound
- * @prop {number} [startAt] - when to start playing the sound from
- * @prop {number} [volume] - the volume of the sound
+ * @prop {number} startTime
+ *  - the time that the sound starts playing, in seconds
+ * @prop {number} [stopTime] - the timestamp when to stop the sound
+ * @prop {number} [startAt] - when to start playing the sound from, in seconds
+ * @prop {number} [startingVolume] - the volume of the sound, in seconds
  * @prop {Map<number, number>} [volumeChanges] - changes in the volume
  *
  * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions

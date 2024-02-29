@@ -306,7 +306,9 @@ export default class VideoCreator extends HTMLElement {
 
 
           const bufferSrc = new AudioBufferSourceNode(audioCtx, { buffer });
-          const gain = new GainNode(audioCtx, { gain: instruction.volume });
+          const gain = new GainNode(audioCtx, {
+            gain: instruction.startingVolume,
+          });
 
           instruction.volumeChanges?.forEach((volume, time) => {
             gain.gain.setValueAtTime(volume, time);
@@ -315,9 +317,9 @@ export default class VideoCreator extends HTMLElement {
           bufferSrc.connect(gain).connect(audioCtx.destination);
 
 
-          bufferSrc.start(instruction.timestamp);
-          if (instruction.stop !== undefined)
-            bufferSrc.stop(instruction.stop);
+          bufferSrc.start(instruction.startTime);
+          if (instruction.stopTime !== undefined)
+            bufferSrc.stop(instruction.stopTime);
         }
       })());
     }
