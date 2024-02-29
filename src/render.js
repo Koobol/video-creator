@@ -1,4 +1,5 @@
 import Video, { videos } from "./video.js";
+import Sound, { sounds } from "./sound.js";
 import { sleep, getMessage } from "./funcs.js";
 
 
@@ -44,57 +45,13 @@ export default class VideoSrc {
 
 
   /**
-   * @overload
    * play the requested sound
    * @param {string | URL} src - the file containing the sound
-   * @param {PlaySoundOptions} [options]
+   * @param {SoundOptions} [options]
    *   - the options of the sound
-   * @returns {symbol} a key which can be used to manipulate the sound
-   *
-   * @overload
-   * play the requested sound
-   * @param {string | URL} src - the file containing the sound
-   * @param {number} [startAt]
-   *   - when to start playing the sound from
-   * @returns {symbol} a key which can be used to manipulate the sound
-   *
-   *
-   * @method
-   * play the requested sound
-   * @param {string | URL} src
-   * @param {number | PlaySoundOptions} [startAtOrOptions]
-   * @returns {symbol}
    */
-  playSound(src, startAtOrOptions) {
-    /** @type {PlaySoundOptions["startAt"]} */
-    let startAt;
-    /** @type {PlaySoundOptions["volume"]} */
-    let volume;
-    if (typeof startAtOrOptions === "object")
-      ({ startAt, volume } = startAtOrOptions);
-    else startAt = startAtOrOptions;
-
-
-    /** @satisfies {AudioInstruction} */
-    const instruction = {
-      timestamp: this.currentTime,
-      startAt,
-      volume,
-    };
-
-
-    if (src instanceof URL) src = src.href;
-
-
-    if (!this.#audioInstructions.has(src))
-      this.#audioInstructions.set(src, new Set());
-    this.#audioInstructions.get(src)?.add(instruction);
-
-
-    const key = Symbol(src);
-    this.#sounds.set(key, instruction);
-
-    return key;
+  playSound(src, options) {
+    return new Sound(this, src, options);
   }
   /** @type {AudioInstructions} */
   #audioInstructions = new Map();
@@ -306,4 +263,7 @@ export { default as Sound } from "./sound.js";
  * @typedef PlaySoundOptions
  * @prop {number} [startAt] - when to start playing the sound from
  * @prop {number} [volume] - the volume of the sound
+ *
+ *
+ * @typedef {import("./sound.js").SoundOptions} SoundOptions
  */
