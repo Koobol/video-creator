@@ -437,8 +437,7 @@ export default class VideoCreator extends HTMLElement {
   #volume = 1;
   get volume() { return this.#volume; }
   set volume(volume) {
-    // change in next major update
-    if (volume < 0) return;
+    if (volume < 0) volume = 0;
 
 
     this.#volume = volume;
