@@ -17,7 +17,7 @@ export default class Sound {
   }
 
   #startingTime;
-  /** the time at which the sound starts playing */
+  /** the time within the video at which the sound starts playing */
   get startingTime() { return this.#startingTime; }
 
   #startAt;

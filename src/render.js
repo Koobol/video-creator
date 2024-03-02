@@ -18,8 +18,8 @@ export default class VideoSrc {
     this.#frameRate = frameRate;
 
 
-    videos.set(this, []);
-    sounds.set(this, []);
+    videos.set(this, new Set());
+    sounds.set(this, new Set());
   }
 
   #frameRate;
@@ -57,36 +57,6 @@ export default class VideoSrc {
   playSound(src, options) {
     return new Sound(this, src, options);
   }
-  /** @type {AudioInstructions} */
-  #audioInstructions = new Map();
-
-  /**
-   * change the volume of the given sound
-   * @param {symbol} sound
-   * @param {number} volume - the new volume
-   */
-  changeVolume(sound, volume) {
-    const instruction = this.#sounds.get(sound);
-    if (!instruction) return;
-
-    if (!instruction.volumeChanges) instruction.volumeChanges = new Map();
-
-
-    instruction.volumeChanges.set(this.currentTime, volume);
-  }
-
-  /**
-   * pause the given sound
-   * @param {symbol} sound
-   */
-  stopSound(sound) {
-    const instruction = this.#sounds.get(sound);
-    if (instruction && instruction.stopTime === undefined)
-      instruction.stopTime = this.currentTime;
-  }
-
-  /** @type {Map<symbol, AudioInstruction>} */
-  #sounds = new Map();
 
 
   /**
@@ -281,11 +251,6 @@ export { default as Sound } from "./sound.js";
  * @prop {Map<number, number>} [volumeChanges] - changes in the volume
  *
  * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
- *
- *
- * @typedef PlaySoundOptions
- * @prop {number} [startAt] - when to start playing the sound from
- * @prop {number} [volume] - the volume of the sound
  *
  *
  * @typedef {import("./sound.js").SoundOptions} SoundOptions
