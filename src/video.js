@@ -4,7 +4,7 @@ export default class Video {
   #frame = 0;
 
   #src;
-  /** @type {symbol?} */
+  /** @type {import("./sound").default?} */
   #audio = null;
   
   #startAt;
@@ -49,7 +49,7 @@ export default class Video {
 
 
     if (!this.#audio) return;
-    this.#videoSrc.changeVolume(this.#audio, volume);
+    this.#audio.volume = volume;
   }
 
 
@@ -93,7 +93,7 @@ export default class Video {
   }
   pause() {
     if (!this.#audio) return;
-    this.#videoSrc.stopSound(this.#audio);
+    this.#audio.stop();
     this.#audio = null;
   }
 

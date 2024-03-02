@@ -1,4 +1,4 @@
-import VideoSrc from "./render";
+/** @typedef {import ("./render").default} VideoSrc */
 
 
 /** @type {(sound: Sound) => Map<number, number>} */
