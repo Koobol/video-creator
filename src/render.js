@@ -1,4 +1,5 @@
-import Video from "./video.js";
+import Video, { videos } from "./video.js";
+import Sound, { sounds } from "./sound.js";
 import { sleep, getMessage } from "./funcs.js";
 
 
@@ -15,6 +16,10 @@ export default class VideoSrc {
 
     /** the framerate of the video */
     this.#frameRate = frameRate;
+
+
+    videos.set(this, []);
+    sounds.set(this, []);
   }
 
   #frameRate;
@@ -44,57 +49,13 @@ export default class VideoSrc {
 
 
   /**
-   * @overload
    * play the requested sound
    * @param {string | URL} src - the file containing the sound
-   * @param {PlaySoundOptions} [options]
+   * @param {SoundOptions} [options]
    *   - the options of the sound
-   * @returns {symbol} a key which can be used to manipulate the sound
-   *
-   * @overload
-   * play the requested sound
-   * @param {string | URL} src - the file containing the sound
-   * @param {number} [startAt]
-   *   - when to start playing the sound from
-   * @returns {symbol} a key which can be used to manipulate the sound
-   *
-   *
-   * @method
-   * play the requested sound
-   * @param {string | URL} src
-   * @param {number | PlaySoundOptions} [startAtOrOptions]
-   * @returns {symbol}
    */
-  playSound(src, startAtOrOptions) {
-    /** @type {PlaySoundOptions["startAt"]} */
-    let startAt;
-    /** @type {PlaySoundOptions["volume"]} */
-    let volume;
-    if (typeof startAtOrOptions === "object")
-      ({ startAt, volume } = startAtOrOptions);
-    else startAt = startAtOrOptions;
-
-
-    /** @satisfies {AudioInstruction} */
-    const instruction = {
-      timestamp: this.currentTime,
-      startAt,
-      volume,
-    };
-
-
-    if (src instanceof URL) src = src.href;
-
-
-    if (!this.#audioInstructions.has(src))
-      this.#audioInstructions.set(src, new Set());
-    this.#audioInstructions.get(src)?.add(instruction);
-
-
-    const key = Symbol(src);
-    this.#sounds.set(key, instruction);
-
-    return key;
+  playSound(src, options) {
+    return new Sound(this, src, options);
   }
   /** @type {AudioInstructions} */
   #audioInstructions = new Map();
@@ -120,8 +81,8 @@ export default class VideoSrc {
    */
   stopSound(sound) {
     const instruction = this.#sounds.get(sound);
-    if (instruction && instruction.stop === undefined)
-      instruction.stop = this.currentTime;
+    if (instruction && instruction.stopTime === undefined)
+      instruction.stopTime = this.currentTime;
   }
 
   /** @type {Map<symbol, AudioInstruction>} */
@@ -198,7 +159,6 @@ export default class VideoSrc {
 
 
     const videoSrc = new this({ canvas, frameRate });
-    Video.videos.set(videoSrc, []);
 
 
     /** @type {RenderOutput["frames"]} */
@@ -235,15 +195,34 @@ export default class VideoSrc {
       videoSrc.#frame++;
       
 
-      Video.videos.get(videoSrc)?.filter(video => video.playing)
-        .forEach((video) => { video.nextFrame(videoSrc.#key); });
+      videos.get(videoSrc)?.forEach((video) => {
+        if (!video.playing) return;
+
+        video.nextFrame(videoSrc.#key);
+      });
     }
+
+
+    /** @type {AudioInstructions} */
+    const audioInstructions = new Map();
+    sounds.get(videoSrc)?.forEach(sound => {
+      const src = typeof sound.src === "string" ? sound.src : sound.src.href;
+
+      if (!audioInstructions.has(src)) audioInstructions.set(src, new Set());
+
+
+      audioInstructions.get(src)?.add({
+        startTime: sound.startingTime,
+        startAt: sound.startAt,
+        startingVolume: sound.getVolumeAt(sound.startingTime),
+      });
+    });
 
 
     postMessage(/** @satisfies {RenderOutput} */ ({
       type: "output",
       frames,
-      audioInstructions: videoSrc.#audioInstructions,
+      audioInstructions,
     }), { transfer: frames });
   }
 
@@ -253,6 +232,7 @@ export default class VideoSrc {
 
 
 export { default as Video } from "./video.js";
+export { default as Sound } from "./sound.js";
 
 
 /**
@@ -293,10 +273,11 @@ export { default as Video } from "./video.js";
  * 
  * 
  * @typedef AudioInstruction
- * @prop {number} timestamp - the time that the sound starts playing in seconds
- * @prop {number} [stop] - the timestamp when to stop the sound
- * @prop {number} [startAt] - when to start playing the sound from
- * @prop {number} [volume] - the volume of the sound
+ * @prop {number} startTime
+ *  - the time that the sound starts playing, in seconds
+ * @prop {number} [stopTime] - the timestamp when to stop the sound
+ * @prop {number} [startAt] - when to start playing the sound from, in seconds
+ * @prop {number} [startingVolume] - the volume of the sound, in seconds
  * @prop {Map<number, number>} [volumeChanges] - changes in the volume
  *
  * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
@@ -305,4 +286,7 @@ export { default as Video } from "./video.js";
  * @typedef PlaySoundOptions
  * @prop {number} [startAt] - when to start playing the sound from
  * @prop {number} [volume] - the volume of the sound
+ *
+ *
+ * @typedef {import("./sound.js").SoundOptions} SoundOptions
  */
