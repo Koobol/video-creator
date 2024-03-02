@@ -1,5 +1,5 @@
 import Video, { videos } from "./video.js";
-import Sound, { sounds } from "./sound.js";
+import Sound, { sounds, getVolumeChanges } from "./sound.js";
 import { sleep, getMessage } from "./funcs.js";
 
 
@@ -183,10 +183,12 @@ export default class VideoSrc {
 
       audioInstructions.get(src)?.add({
         startTime: sound.startingTime,
-        startAt: sound.startAt,
-        startingVolume: sound.getVolumeAt(sound.startingTime),
-
         stopTime: sound.stopTime ?? undefined,
+
+        startAt: sound.startAt,
+
+        startingVolume: sound.getVolumeAt(sound.startingTime),
+        volumeChanges: getVolumeChanges(sound),
       });
     });
 

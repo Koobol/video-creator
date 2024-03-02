@@ -1,5 +1,10 @@
 import VideoSrc from "./render";
 
+
+/** @type {(sound: Sound) => Map<number, number>} */
+let getVolumeChanges;
+
+
 export default class Sound {
   /**
    * @param {VideoSrc} videoSrc
@@ -32,11 +37,42 @@ export default class Sound {
   get src() { return this.#src; }
 
   #startingVolume;
+
+
+  /** @type {Map<number, number>} */
+  #volumeChanges = new Map();
+
+  /** the current volume of the video */
+  get volume() { return this.getVolumeAt(this.#videoSrc.currentTime); }
+  set volume(volume) {
+    if (volume < 0) volume = 0;
+
+    this.#volumeChanges.set(this.#videoSrc.currentTime, volume);
+  }
+
   /**
    * get the volume of the sound at the specified time
    * @param {number} time
+   * @returns {number}
    */
-  getVolumeAt(time) { return this.#startingVolume; }
+  getVolumeAt(time) {
+    let volume = this.#startingVolume;
+
+
+    for (const [changeTime, changeVolume] of this.#volumeChanges) {
+      if (time < changeTime) break;
+
+
+      volume = changeVolume;
+    }
+
+
+    return volume;
+  }
+
+  static {
+    getVolumeChanges = sound => sound.#volumeChanges;
+  }
 
 
   /** @type {number?} */
@@ -53,7 +89,12 @@ export default class Sound {
 export const sounds = new WeakMap();
 
 
+export { getVolumeChanges };
+
+
 /**
+ * @exports
+ *
  * @typedef SoundOptions
  * @prop {number} [startAt] - when to start playing the sound from
  * @prop {number} [volume] - the volume of the sound
