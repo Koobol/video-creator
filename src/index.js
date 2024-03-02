@@ -296,15 +296,11 @@ export default class VideoCreator extends HTMLElement {
     const promises = [];
     for (const [fileName, instructions] of audioInstructions) {
       promises.push((async () => {
-        const fullBuffer = await audioCtx.decodeAudioData(
+        const buffer = await audioCtx.decodeAudioData(
           await (await fetch(fileName)).arrayBuffer(),
         );
 
         for (const instruction of instructions) {
-          const buffer = !instruction.startAt ? fullBuffer
-            : clipAudioBuffer(fullBuffer, instruction.startAt);
-
-
           const bufferSrc = new AudioBufferSourceNode(audioCtx, { buffer });
           const gain = new GainNode(audioCtx, {
             gain: instruction.startingVolume,
@@ -317,7 +313,7 @@ export default class VideoCreator extends HTMLElement {
           bufferSrc.connect(gain).connect(audioCtx.destination);
 
 
-          bufferSrc.start(instruction.startTime);
+          bufferSrc.start(instruction.startTime, instruction.offset);
           if (instruction.stopTime !== undefined)
             bufferSrc.stop(instruction.stopTime);
         }
@@ -514,19 +510,16 @@ export default class VideoCreator extends HTMLElement {
     if (this.#audioCtx.state === "suspended")
       this.#audioCtx.resume();
 
-    const buffer = clipAudioBuffer(
-      this.#audio,
-      this.frame / this.frameRate,
-    );
-
-    this.#playing = new AudioBufferSourceNode(this.#audioCtx, { buffer });
+    this.#playing = new AudioBufferSourceNode(this.#audioCtx, {
+      buffer: this.#audio,
+    });
 
     this.#volumeNode ??= new GainNode(this.#audioCtx, { gain: this.volume });
     this.#playing.connect(this.#volumeNode);
 
     this.#volumeNode.connect(this.#audioCtx.destination);
     this.#volumeNode.connect(this.#audioStream);
-    this.#playing.start(0);
+    this.#playing.start(0, this.frame / this.frameRate);
   }
 
   /** pause the preview */

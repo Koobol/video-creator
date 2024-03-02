@@ -11,7 +11,7 @@ export default class Video {
   /** @type {import("./sound").default?} */
   #audio = null;
   
-  #startAt;
+  #offset;
 
   #videoSrc;
 
@@ -20,16 +20,16 @@ export default class Video {
    * @param {string} src
    *   - the source of the video's audio, usually the video file
    * @param {import("./render").default} videoSrc
-   * @param {number} [startAt]
+   * @param {number} [offset]
    *   - how offset the video is from its audio, in seconds
    */
-  constructor(frames, src, videoSrc, startAt = 0) {
+  constructor(frames, src, videoSrc, offset = 0) {
     this.#frames = frames;
 
 
     this.#src = src;
 
-    this.#startAt = startAt;
+    this.#offset = offset;
 
 
     this.#videoSrc = videoSrc;
@@ -82,7 +82,7 @@ export default class Video {
     if (this.playing) return;
 
     this.#audio = this.#videoSrc.playSound(this.#src, {
-      startAt: this.#startAt + this.frame / this.#videoSrc.frameRate,
+      offset: this.#offset + this.frame / this.#videoSrc.frameRate,
       volume: this.volume,
     });
   }
