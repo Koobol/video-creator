@@ -88,9 +88,7 @@ export default class Sound {
 /** @type {WeakMap<VideoSrc, Set<Sound>>} */
 export const sounds = new WeakMap();
 
-
 export { getVolumeChanges };
-
 
 /**
  * @exports

@@ -1,3 +1,7 @@
+/** @type {(video: Video) => void} */
+let nextFrame;
+
+
 export default class Video {
   /** @type {ImageBitmap[]} */
   #frames;
@@ -10,18 +14,16 @@ export default class Video {
   #startAt;
 
   #videoSrc;
-  #key;
 
   /**
    * @param {ImageBitmap[]} frames
    * @param {string} src
    *   - the source of the video's audio, usually the video file
    * @param {import("./render").default} videoSrc
-   * @param {symbol} key
    * @param {number} [startAt]
    *   - how offset the video is from its audio, in seconds
    */
-  constructor(frames, src, videoSrc, key, startAt = 0) {
+  constructor(frames, src, videoSrc, startAt = 0) {
     this.#frames = frames;
 
 
@@ -31,8 +33,6 @@ export default class Video {
 
 
     this.#videoSrc = videoSrc;
-
-    this.#key = key;
 
 
     videos.get(videoSrc)?.add(this);
@@ -62,19 +62,14 @@ export default class Video {
   }
 
 
-  /**
-   * only to be used by internals
-   * @param {symbol} key
-   */
-  nextFrame(key) {
-    if (key !== this.#key) return;
+  static {
+    nextFrame = sound => {
+      sound.#frame++;
 
 
-    this.#frame++;
-    
-
-    if (this.#frame < this.#frames.length - 1) return;
-    this.pause();
+      if (sound.#frame < sound.#frames.length - 1) return;
+      sound.pause();
+    }
   }
 
   /** the current time of the video, in seconds */
@@ -108,3 +103,5 @@ export default class Video {
 
 /** @type {WeakMap<import("./render").default, Set<Video>>} */
 export const videos = new WeakMap();
+
+export { nextFrame };

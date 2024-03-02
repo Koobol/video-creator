@@ -1,4 +1,4 @@
-import Video, { videos } from "./video.js";
+import Video, { videos, nextFrame } from "./video.js";
 import Sound, { sounds, getVolumeChanges } from "./sound.js";
 import { sleep, getMessage } from "./funcs.js";
 
@@ -81,7 +81,7 @@ export default class VideoSrc {
     const { frames } = await getMessage("video response");
 
 
-    return new Video(frames, src, this, this.#key, start);
+    return new Video(frames, src, this, start);
   }
 
 
@@ -168,7 +168,7 @@ export default class VideoSrc {
       videos.get(videoSrc)?.forEach((video) => {
         if (!video.playing) return;
 
-        video.nextFrame(videoSrc.#key);
+        nextFrame(video);
       });
     }
 
@@ -199,15 +199,11 @@ export default class VideoSrc {
       audioInstructions,
     }), { transfer: frames });
   }
-
-
-  #key = Symbol("VideoSrc Video key");
 }
 
 
 export { default as Video } from "./video.js";
 export { default as Sound } from "./sound.js";
-
 
 /**
  * @exports
