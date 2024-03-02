@@ -185,6 +185,8 @@ export default class VideoSrc {
         startTime: sound.startingTime,
         startAt: sound.startAt,
         startingVolume: sound.getVolumeAt(sound.startingTime),
+
+        stopTime: sound.stopTime ?? undefined,
       });
     });
 

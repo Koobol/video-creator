@@ -9,12 +9,15 @@ export default class Sound {
   constructor(videoSrc, src, { startAt = 0, volume = 1 } = {}) {
     sounds.get(videoSrc)?.add(this);
 
+    this.#videoSrc = videoSrc;
+
     this.#src = src;
 
     this.#startingTime = videoSrc.currentTime;
     this.#startAt = startAt;
     this.#startingVolume = volume;
   }
+  #videoSrc;
 
   #startingTime;
   /** the time within the video at which the sound starts playing */
@@ -34,6 +37,15 @@ export default class Sound {
    * @param {number} time
    */
   getVolumeAt(time) { return this.#startingVolume; }
+
+
+  /** @type {number?} */
+  #stopTime = null;
+  get stopTime() { return this.#stopTime; }
+  /** stop the sound */
+  stop() {
+    this.#stopTime ??= this.#videoSrc.currentTime;
+  }
 }
 
 
