@@ -182,15 +182,17 @@ export default class VideoSrc {
 
 
       audioInstructions.get(src)?.add({
-        startTime: sound.startingTime,
+        startTime: sound.startTime,
         stopTime: sound.stopTime ?? undefined,
 
         offset: sound.offset,
 
-        startingVolume: sound.getVolumeAt(sound.startingTime),
+        startingVolume: sound.getVolumeAt(sound.startTime),
         volumeChanges: getVolumeChanges(sound),
 
         loop: sound.loop,
+        loopStart: sound.loopStart,
+        loopEnd: sound.loopEnd,
       });
     });
 
@@ -252,6 +254,8 @@ export { default as Sound } from "./sound.js";
  * @prop {number} [startingVolume] - the volume of the sound, in seconds
  * @prop {Map<number, number>} [volumeChanges] - changes in the volume
  * @prop {boolean} [loop] - whether or not the sound is looping
+ * @prop {number} [loopStart] - when to start looping from
+ * @prop {number} [loopEnd] - when to stop looping from
  *
  * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
  *

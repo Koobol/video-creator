@@ -300,25 +300,36 @@ export default class VideoCreator extends HTMLElement {
           await (await fetch(fileName)).arrayBuffer(),
         );
 
-        for (const instruction of instructions) {
+        for (const {
+          startTime,
+          offset,
+          stopTime,
+          volumeChanges,
+          startingVolume,
+          loop,
+          loopStart,
+          loopEnd,
+        } of instructions) {
           const bufferSrc = new AudioBufferSourceNode(audioCtx, {
             buffer,
-            loop: instruction.loop ?? false,
+            loop,
+            loopStart,
+            loopEnd,
           });
           const gain = new GainNode(audioCtx, {
-            gain: instruction.startingVolume,
+            gain: startingVolume,
           });
 
-          instruction.volumeChanges?.forEach((volume, time) => {
+          volumeChanges?.forEach((volume, time) => {
             gain.gain.setValueAtTime(volume, time);
           });
 
           bufferSrc.connect(gain).connect(audioCtx.destination);
 
 
-          bufferSrc.start(instruction.startTime, instruction.offset);
-          if (instruction.stopTime !== undefined)
-            bufferSrc.stop(instruction.stopTime);
+          bufferSrc.start(startTime, offset);
+          if (stopTime !== undefined)
+            bufferSrc.stop(stopTime);
         }
       })());
     }

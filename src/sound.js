@@ -11,28 +11,45 @@ export default class Sound {
    * @param {string | URL} src
    * @param {SoundOptions} [options]
    */
-  constructor(videoSrc, src, { offset = 0, volume = 1, loop = false } = {}) {
+  constructor(videoSrc, src, {
+    offset = 0,
+    volume = 1,
+    loop = false,
+    loopStart = 0,
+    loopEnd = 0,
+  } = {}) {
     sounds.get(videoSrc)?.add(this);
 
     this.#videoSrc = videoSrc;
 
     this.#src = src;
 
-    this.#startingTime = videoSrc.currentTime;
+    this.#startTime = videoSrc.currentTime;
     this.#offset = offset;
     this.#startingVolume = volume;
 
     this.#loop = loop;
+    this.#loopStart = loopStart;
+    this.#loopEnd = loopEnd;
   }
   #videoSrc;
 
   #loop;
   /** whether or not the sound is looping */
   get loop() { return this.#loop; }
+  #loopEnd;
+  /** when the sound will start looping from */
+  get loopEnd() { return this.#loopEnd; }
+  #loopStart;
+  /**
+   * when the sound will stop looping from,
+   * if less than or equal to loopStart will loop over entire track
+   */
+  get loopStart() { return this.#loopStart; }
 
-  #startingTime;
+  #startTime;
   /** the time within the video at which the sound starts playing */
-  get startingTime() { return this.#startingTime; }
+  get startTime() { return this.#startTime; }
 
   #offset;
   /** when the sound starts playing from */
@@ -103,4 +120,7 @@ export { getVolumeChanges };
  * @prop {number} [offset] - how offset the sound is from its normal start
  * @prop {number} [volume] - the volume of the sound
  * @prop {boolean} [loop] - whether or not to loop the sound
+ * @prop {number} [loopStart] - when to start looping from
+ * @prop {number} [loopEnd] - when to stop looping from,
+ *  if less than or equal to loopStart will loop over entire track
  */
