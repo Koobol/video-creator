@@ -185,7 +185,7 @@ export default class VideoSrc {
         stopTime: sound.stopTime ?? undefined,
 
         offset: sound.offset,
-        duration: sound.duration,
+        duration: sound.duration ?? undefined,
 
         startingVolume: sound.getVolumeAt(sound.startTime),
         volumeChanges: getVolumeChanges(sound),

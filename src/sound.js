@@ -13,7 +13,7 @@ export default class Sound {
    */
   constructor(videoSrc, src, {
     offset = 0,
-    duration = Infinity,
+    duration = null,
     volume = 1,
     loop = false,
     loopStart = 0,
@@ -61,7 +61,7 @@ export default class Sound {
   #duration;
   /**
    * how long the sound will play for,
-   * will be Infinity if sound plays all the way through
+   * will be null if sound plays all the way through
    */
   get duration() { return this.#duration; }
 
@@ -128,7 +128,7 @@ export { getVolumeChanges };
  *
  * @typedef SoundOptions
  * @prop {number} [offset] - how offset the sound is from its normal start
- * @prop {number} [duration] - how long to play the sound for,
+ * @prop {number?} [duration] - how long to play the sound for,
  *   if not specified will play entire sound
  * @prop {number} [volume] - the volume of the sound
  * @prop {boolean} [loop] - whether or not to loop the sound
