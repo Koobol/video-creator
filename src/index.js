@@ -303,6 +303,7 @@ export default class VideoCreator extends HTMLElement {
         for (const {
           startTime,
           offset,
+          duration,
           stopTime,
           volumeChanges,
           startingVolume,
@@ -327,7 +328,7 @@ export default class VideoCreator extends HTMLElement {
           bufferSrc.connect(gain).connect(audioCtx.destination);
 
 
-          bufferSrc.start(startTime, offset);
+          bufferSrc.start(startTime, offset, duration);
           if (stopTime !== undefined)
             bufferSrc.stop(stopTime);
         }

@@ -186,6 +186,7 @@ export default class VideoSrc {
         stopTime: sound.stopTime ?? undefined,
 
         offset: sound.offset,
+        duration: sound.duration,
 
         startingVolume: sound.getVolumeAt(sound.startTime),
         volumeChanges: getVolumeChanges(sound),
@@ -251,6 +252,7 @@ export { default as Sound } from "./sound.js";
  *  - the time that the sound starts playing, in seconds
  * @prop {number} [stopTime] - the timestamp when to stop the sound
  * @prop {number} [offset] - when to start playing the sound from, in seconds
+ * @prop {number} [duration] - how long to play the sound for
  * @prop {number} [startingVolume] - the volume of the sound, in seconds
  * @prop {Map<number, number>} [volumeChanges] - changes in the volume
  * @prop {boolean} [loop] - whether or not the sound is looping

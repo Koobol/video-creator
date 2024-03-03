@@ -13,6 +13,7 @@ export default class Sound {
    */
   constructor(videoSrc, src, {
     offset = 0,
+    duration = Infinity,
     volume = 1,
     loop = false,
     loopStart = 0,
@@ -31,6 +32,8 @@ export default class Sound {
     this.#loop = loop;
     this.#loopStart = loopStart;
     this.#loopEnd = loopEnd;
+
+    this.#duration = duration;
   }
   #videoSrc;
 
@@ -54,6 +57,13 @@ export default class Sound {
   #offset;
   /** when the sound starts playing from */
   get offset() { return this.#offset; }
+
+  #duration;
+  /**
+   * how long the sound will play for,
+   * will be Infinity if sound plays all the way through
+   */
+  get duration() { return this.#duration; }
 
   #src;
   /** the source of the video */
@@ -118,9 +128,11 @@ export { getVolumeChanges };
  *
  * @typedef SoundOptions
  * @prop {number} [offset] - how offset the sound is from its normal start
+ * @prop {number} [duration] - how long to play the sound for,
+ *   if not specified will play entire sound
  * @prop {number} [volume] - the volume of the sound
  * @prop {boolean} [loop] - whether or not to loop the sound
  * @prop {number} [loopStart] - when to start looping from
  * @prop {number} [loopEnd] - when to stop looping from,
- *  if less than or equal to loopStart will loop over entire track
+ *   if less than or equal to loopStart will loop over entire track
  */
