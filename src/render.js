@@ -99,12 +99,13 @@ export default class VideoSrc {
 
 
   /**
-   * use to define the class as the one to be used as the video
+   * use to define a VideoSrc as the one to render the video
+   * @param {typeof VideoSrc} UsedVideoSrc - the VideoSrc to be used
    * @param {boolean} [oneTime] - whether or not to only handle one request
    */
-  static async render(oneTime = false) {
+  static async render(UsedVideoSrc, oneTime = false) {
     if (!oneTime) {
-      while (true) await this.render(true);
+      while (true) await VideoSrc.render(UsedVideoSrc, true);
     }
 
 
@@ -125,7 +126,7 @@ export default class VideoSrc {
     const canvas = new OffscreenCanvas(width, height);
 
 
-    const videoSrc = new this({ canvas, frameRate });
+    const videoSrc = new VideoSrc({ canvas, frameRate });
 
 
     /** @type {RenderOutput["frames"]} */
