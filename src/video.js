@@ -8,6 +8,7 @@ export default class Video {
   #frame = 0;
 
   #src;
+  get src() { return this.#src; }
   /** @type {import("./sound").default?} */
   #audio = null;
   
@@ -17,7 +18,7 @@ export default class Video {
 
   /**
    * @param {ImageBitmap[]} frames
-   * @param {string} src
+   * @param {string | URL} src
    *   - the source of the video's audio, usually the video file
    * @param {import("./render").default} videoSrc
    * @param {number} [offset]
@@ -27,7 +28,7 @@ export default class Video {
     this.#frames = frames;
 
 
-    this.#src = src;
+    this.#src = new URL(src, location.href);
 
     this.#offset = offset;
 

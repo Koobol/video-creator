@@ -23,7 +23,7 @@ export default class Sound {
 
     this.#videoSrc = videoSrc;
 
-    this.#src = src;
+    this.#src = new URL(src, location.href);
 
     this.#startTime = videoSrc.currentTime;
     this.#offset = offset;

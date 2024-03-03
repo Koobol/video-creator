@@ -67,12 +67,9 @@ export default class VideoSrc {
    * @returns {Promise<Video>}
    */
   async getVideo(src, start, end) {
-    if (src instanceof URL) src = src.href;
-
-
     postMessage(/** @satisfies {VideoRequest} */ ({
       type: "video request",
-      src,
+      src: new URL(src, location.href).href,
       start,
       end,
     }));
@@ -176,7 +173,8 @@ export default class VideoSrc {
     /** @type {AudioInstructions} */
     const audioInstructions = new Map();
     sounds.get(videoSrc)?.forEach(sound => {
-      const src = typeof sound.src === "string" ? sound.src : sound.src.href;
+      const src = sound.src.href;
+
 
       if (!audioInstructions.has(src)) audioInstructions.set(src, new Set());
 
