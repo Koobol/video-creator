@@ -301,7 +301,10 @@ export default class VideoCreator extends HTMLElement {
         );
 
         for (const instruction of instructions) {
-          const bufferSrc = new AudioBufferSourceNode(audioCtx, { buffer });
+          const bufferSrc = new AudioBufferSourceNode(audioCtx, {
+            buffer,
+            loop: instruction.loop ?? false,
+          });
           const gain = new GainNode(audioCtx, {
             gain: instruction.startingVolume,
           });

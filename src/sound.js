@@ -11,7 +11,7 @@ export default class Sound {
    * @param {string | URL} src
    * @param {SoundOptions} [options]
    */
-  constructor(videoSrc, src, { offset = 0, volume = 1 } = {}) {
+  constructor(videoSrc, src, { offset = 0, volume = 1, loop = false } = {}) {
     sounds.get(videoSrc)?.add(this);
 
     this.#videoSrc = videoSrc;
@@ -21,8 +21,14 @@ export default class Sound {
     this.#startingTime = videoSrc.currentTime;
     this.#offset = offset;
     this.#startingVolume = volume;
+
+    this.#loop = loop;
   }
   #videoSrc;
+
+  #loop;
+  /** whether or not the sound is looping */
+  get loop() { return this.#loop; }
 
   #startingTime;
   /** the time within the video at which the sound starts playing */
@@ -94,6 +100,7 @@ export { getVolumeChanges };
  * @exports
  *
  * @typedef SoundOptions
- * @prop {number} [offset] - when to start playing the sound from
+ * @prop {number} [offset] - how offset the sound is from its normal start
  * @prop {number} [volume] - the volume of the sound
+ * @prop {boolean} [loop] - whether or not to loop the sound
  */
