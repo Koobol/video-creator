@@ -12,6 +12,7 @@ export default class Sound {
    * @param {SoundOptions} [options]
    */
   constructor(videoSrc, src, {
+    delay = 0,
     offset = 0,
     duration = null,
     volume = 1,
@@ -25,7 +26,7 @@ export default class Sound {
 
     this.#src = new URL(src, location.href);
 
-    this.#startTime = videoSrc.currentTime;
+    this.#startTime = Math.max(videoSrc.currentTime + delay, 0);
     this.#offset = offset;
     this.#startingVolume = volume;
 
@@ -127,6 +128,7 @@ export { getVolumeChanges };
  * @exports
  *
  * @typedef SoundOptions
+ * @prop {number} [delay] - how much time before the sound is played
  * @prop {number} [offset] - how offset the sound is from its normal start
  * @prop {number?} [duration] - how long to play the sound for,
  *   if not specified will play entire sound
