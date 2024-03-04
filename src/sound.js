@@ -4,6 +4,9 @@
 /** @type {(sound: Sound) => Map<number, number>} */
 let getVolumeChanges;
 
+/** @type {(sound: Sound) => Map<number, number>} */
+let getSpeedChanges;
+
 
 export default class Sound {
   /**
@@ -19,6 +22,7 @@ export default class Sound {
     loop = false,
     loopStart = 0,
     loopEnd = 0,
+    speed = 1,
   } = {}) {
     sounds.get(videoSrc)?.add(this);
 
@@ -35,6 +39,8 @@ export default class Sound {
     this.#loopEnd = loopEnd;
 
     this.#duration = duration;
+
+    this.#startingSpeed = speed;
   }
   #videoSrc;
 
@@ -71,6 +77,8 @@ export default class Sound {
   get src() { return this.#src; }
 
   #startingVolume;
+
+  #startingSpeed;
 
 
   /** @type {Map<number, number>} */
@@ -109,6 +117,42 @@ export default class Sound {
   }
 
 
+  /** @type {Map<number, number>} */
+  #speedChanges = new Map();
+
+  /** the current speed of the video */
+  get speed() { return this.getVolumeAt(this.#videoSrc.currentTime); }
+  set speed(speed) {
+    if (speed < 0) speed = 0;
+
+    this.#speedChanges.set(this.#videoSrc.currentTime, speed);
+  }
+
+  /**
+   * get the speed of the sound at the specified time
+   * @param {number} time
+   * @returns {number}
+   */
+  getSpeedAt(time) {
+    let speed = this.#startingSpeed;
+
+
+    for (const [changeTime, changeVolume] of this.#speedChanges) {
+      if (time < changeTime) break;
+
+
+      speed = changeVolume;
+    }
+
+
+    return speed;
+  }
+
+  static {
+    getSpeedChanges = sound => sound.#speedChanges;
+  }
+
+
   /** @type {number?} */
   #stopTime = null;
   get stopTime() { return this.#stopTime; }
@@ -122,7 +166,7 @@ export default class Sound {
 /** @type {WeakMap<VideoSrc, Set<Sound>>} */
 export const sounds = new WeakMap();
 
-export { getVolumeChanges };
+export { getVolumeChanges, getSpeedChanges };
 
 /**
  * @exports
@@ -132,9 +176,10 @@ export { getVolumeChanges };
  * @prop {number} [offset] - how offset the sound is from its normal start
  * @prop {number?} [duration] - how long to play the sound for,
  *   if not specified will play entire sound
- * @prop {number} [volume] - the volume of the sound
+ * @prop {number} [volume] - the initial volume of the sound
  * @prop {boolean} [loop] - whether or not to loop the sound
  * @prop {number} [loopStart] - when to start looping from
  * @prop {number} [loopEnd] - when to stop looping from,
  *   if less than or equal to loopStart will loop over entire track
+ * @prop {number} [speed] - the initial speed of the sound
  */

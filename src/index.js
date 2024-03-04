@@ -310,12 +310,15 @@ export default class VideoCreator extends HTMLElement {
           loop,
           loopStart,
           loopEnd,
+          startingSpeed,
+          speedChanges,
         } of instructions) {
           const bufferSrc = new AudioBufferSourceNode(audioCtx, {
             buffer,
             loop,
             loopStart,
             loopEnd,
+            playbackRate: startingSpeed,
           });
           const gain = new GainNode(audioCtx, {
             gain: startingVolume,
@@ -323,6 +326,9 @@ export default class VideoCreator extends HTMLElement {
 
           volumeChanges?.forEach((volume, time) => {
             gain.gain.setValueAtTime(volume, time);
+          });
+          speedChanges?.forEach((speed, time) => {
+            bufferSrc.playbackRate.setValueAtTime(speed, time);
           });
 
           bufferSrc.connect(gain).connect(audioCtx.destination);

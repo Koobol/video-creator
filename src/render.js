@@ -1,5 +1,5 @@
 import Video, { videos, nextFrame } from "./video.js";
-import Sound, { sounds, getVolumeChanges } from "./sound.js";
+import Sound, { sounds, getVolumeChanges, getSpeedChanges } from "./sound.js";
 import { sleep, getMessage } from "./funcs.js";
 
 
@@ -193,6 +193,9 @@ export default class VideoSrc {
         loop: sound.loop,
         loopStart: sound.loopStart,
         loopEnd: sound.loopEnd,
+
+        startingSpeed: sound.getSpeedAt(sound.startTime),
+        speedChanges: getSpeedChanges(sound),
       });
     });
 
@@ -252,11 +255,13 @@ export { default as Sound } from "./sound.js";
  * @prop {number} [stopTime] - the timestamp when to stop the sound
  * @prop {number} [offset] - when to start playing the sound from, in seconds
  * @prop {number} [duration] - how long to play the sound for
- * @prop {number} [startingVolume] - the volume of the sound, in seconds
+ * @prop {number} [startingVolume] - the initial volume of the sound
  * @prop {Map<number, number>} [volumeChanges] - changes in the volume
  * @prop {boolean} [loop] - whether or not the sound is looping
  * @prop {number} [loopStart] - when to start looping from
  * @prop {number} [loopEnd] - when to stop looping from
+ * @prop {number} [startingSpeed] - the initial speed of the sound
+ * @prop {Map<number, number>} [speedChanges] - changes in speed
  *
  * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
  *
