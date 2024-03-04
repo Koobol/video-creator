@@ -1,4 +1,4 @@
-import Video, { videos, nextFrame } from "./video.js";
+import Video, { updateVideos } from "./video.js";
 import Sound, { sounds, getVolumeChanges, getSpeedChanges } from "./sound.js";
 import { sleep, getMessage } from "./funcs.js";
 
@@ -18,7 +18,6 @@ export default class VideoSrc {
     this.#frameRate = frameRate;
 
 
-    videos.set(this, new Set());
     sounds.set(this, new Set());
   }
 
@@ -161,11 +160,7 @@ export default class VideoSrc {
       videoSrc.#frame++;
       
 
-      videos.get(videoSrc)?.forEach((video) => {
-        if (!video.playing) return;
-
-        nextFrame(video);
-      });
+      updateVideos(videoSrc);
     }
 
 

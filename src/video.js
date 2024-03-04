@@ -1,5 +1,8 @@
-/** @type {(video: Video) => void} */
-let nextFrame;
+/** @typedef {import("./render").default} VideoSrc */
+
+
+/** @type {(videoSrc: VideoSrc) => void} */
+let updateVideos;
 
 
 export default class Video {
@@ -20,7 +23,7 @@ export default class Video {
    * @param {ImageBitmap[]} frames
    * @param {string | URL} src
    *   - the source of the video's audio, usually the video file
-   * @param {import("./render").default} videoSrc
+   * @param {VideoSrc} videoSrc
    * @param {VideoConstructorOptions} options
    */
   constructor(frames, src, videoSrc, { offset = 0, volume = 1 } = {}) {
@@ -38,8 +41,13 @@ export default class Video {
     this.#volume = volume;
 
 
-    videos.get(videoSrc)?.add(this);
+    if (!Video.#videos.get(videoSrc)) Video.#videos.set(videoSrc, new Set());
+    Video.#videos.get(videoSrc)?.add(this);
   }
+
+
+  /** @type {WeakMap<VideoSrc, Set<Video>>} */
+  static #videos = new WeakMap();
 
 
   #volume;
@@ -65,12 +73,17 @@ export default class Video {
   }
 
   static {
-    nextFrame = sound => {
-      sound.#frame++;
+    updateVideos = videoSrc => {
+      Video.#videos.get(videoSrc)?.forEach(video => {
+        if (!video.playing) return;
 
 
-      if (sound.#frame < sound.#frames.length - 1) return;
-      sound.pause();
+        video.#frame++;
+
+
+        if (video.#frame < video.#frames.length - 1) return;
+        video.pause();
+      });
     }
   }
 
@@ -103,10 +116,7 @@ export default class Video {
 }
 
 
-/** @type {WeakMap<import("./render").default, Set<Video>>} */
-export const videos = new WeakMap();
-
-export { nextFrame };
+export { updateVideos };
 
 /**
  * @exports
