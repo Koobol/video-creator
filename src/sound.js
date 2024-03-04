@@ -156,9 +156,12 @@ export default class Sound {
   /** @type {number?} */
   #stopTime = null;
   get stopTime() { return this.#stopTime; }
-  /** stop the sound */
-  stop() {
-    this.#stopTime ??= this.#videoSrc.currentTime;
+  /**
+   * stop the sound
+   * @param {number} [delay] - how much time before the sound is stopped
+   */
+  stop(delay = 0) {
+    this.#stopTime ??= Math.max(this.#videoSrc.currentTime + delay, 0);
   }
 }
 
