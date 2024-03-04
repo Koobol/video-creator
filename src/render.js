@@ -61,12 +61,10 @@ export default class VideoSrc {
 
   /**
    * get an ImageBitmap containing the data from the requested file
-   * @param {string | URL} src - the file containing the image
-   * @param {number} [start] - the timestamp the video starts on
-   * @param {number} [end] - the timestamp the video ends on
-   * @returns {Promise<Video>}
+   * @param {string | URL} src - the file containing the video
+   * @param {VideoOptions} options
    */
-  async getVideo(src, start, end) {
+  async getVideo(src, { start, end, volume }) {
     postMessage(/** @satisfies {VideoRequest} */ ({
       type: "video request",
       src: new URL(src, location.href).href,
@@ -78,7 +76,7 @@ export default class VideoSrc {
     const { frames } = await getMessage("video response");
 
 
-    return new Video(frames, src, this, start);
+    return new Video(frames, src, this, { offset: start, volume });
   }
 
 
@@ -264,6 +262,12 @@ export { default as Sound } from "./sound.js";
  * @prop {Map<number, number>} [speedChanges] - changes in speed
  *
  * @typedef {Map<string, Set<AudioInstruction>>} AudioInstructions
+ *
+ *
+ * @typedef VideoOptions
+ * @prop {number} [start] - the timestamp the video starts on
+ * @prop {number} [end] - the timestamp the video ends on
+ * @prop {number} [volume] - the initial volume of the video
  *
  *
  * @typedef {import("./sound.js").SoundOptions} SoundOptions

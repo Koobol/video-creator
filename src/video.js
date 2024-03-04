@@ -21,10 +21,9 @@ export default class Video {
    * @param {string | URL} src
    *   - the source of the video's audio, usually the video file
    * @param {import("./render").default} videoSrc
-   * @param {number} [offset]
-   *   - how offset the video is from its audio, in seconds
+   * @param {VideoConstructorOptions} options
    */
-  constructor(frames, src, videoSrc, offset = 0) {
+  constructor(frames, src, videoSrc, { offset = 0, volume = 1 } = {}) {
     this.#frames = frames;
 
 
@@ -36,11 +35,14 @@ export default class Video {
     this.#videoSrc = videoSrc;
 
 
+    this.#volume = volume;
+
+
     videos.get(videoSrc)?.add(this);
   }
 
 
-  #volume = 1;
+  #volume;
   get volume() { return this.#volume; }
   set volume(volume) {
     if (volume < 0) volume = 0;
@@ -61,7 +63,6 @@ export default class Video {
 
     this.pause();
   }
-
 
   static {
     nextFrame = sound => {
@@ -106,3 +107,10 @@ export default class Video {
 export const videos = new WeakMap();
 
 export { nextFrame };
+
+/**
+ * @exports
+ * @typedef VideoConstructorOptions
+ * @prop {number} [offset] - how offset the video is from its audio, in seconds
+ * @prop {number} [volume] - the initial volume of the video
+ */
