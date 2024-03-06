@@ -68,7 +68,7 @@ export default class VideoCreator extends HTMLElement {
 
 
     const shadow = this.attachShadow({ mode: "closed" });
-    shadow.appendChild(VideoCreator.#shadow);
+    shadow.appendChild(VideoCreator.#shadow.cloneNode(true));
 
 
     this.#preview = /** @type {HTMLCanvasElement} */
