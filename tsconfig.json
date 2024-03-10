@@ -11,5 +11,8 @@
     "emitDeclarationOnly": true,
 
     "outDir": "types",
-  }
+
+    "skipLibCheck": true
+  },
+  "include": ["src"]
 }

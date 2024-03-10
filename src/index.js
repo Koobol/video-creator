@@ -466,7 +466,7 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
-  /** @type {number=} */
+  /** @type {ReturnType<typeof setTimeout>=} */
   #playTimeout;
   /**
    * start playing the preview
