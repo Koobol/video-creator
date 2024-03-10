@@ -18,6 +18,13 @@ beforeEach(() => {
 });
 
 
+/** @param {Worker} [worker] */
+const render = (worker = new Worker(
+  new URL("videos/basic.js", import.meta.url),
+  { type: "module" },
+)) => videoCreator.render(worker);
+
+
 it("exists", () => {
   expect(document.querySelector("video-creator")).toBe(videoCreator);
 });
@@ -40,7 +47,6 @@ it("starts out waiting", () => {
 
 it("can be rendered", async () => {
   const worker = new Worker(
-    // @ts-ignore
     new URL("videos/basic.js", import.meta.url),
     { type: "module" },
   )
@@ -64,4 +70,16 @@ it("can be rendered", async () => {
 
   expect(videoCreator.getFrames()?.[0]).toBeInstanceOf(ImageBitmap);
   expect(videoCreator.getAudio()).toBeInstanceOf(AudioBuffer);
+});
+
+it("can generate", async () => {
+  await render();
+  
+
+  expect(await videoCreator.generateVideo()).toBeInstanceOf(Blob);
+  expect(videoCreator.state).toBe("rendered");
+
+
+  expect(await videoCreator.generateVideo(true)).toBeInstanceOf(Blob);
+  expect(videoCreator.state).toBe("waiting");
 });
