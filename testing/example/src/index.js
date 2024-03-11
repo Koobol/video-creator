@@ -1,4 +1,5 @@
-import VideoCreator from "video-creator";
+// @ts-check
+import VideoCreator from "../../../src/index";
 
 
 customElements.define("video-creator", VideoCreator);

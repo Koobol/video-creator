@@ -1,4 +1,5 @@
-import VideoSrc from "video-creator/render";
+// @ts-check
+import VideoSrc from "../../../src/render";
 
 
 (class extends VideoSrc {
@@ -6,7 +7,7 @@ import VideoSrc from "video-creator/render";
     (this.canvas.getContext("2d"));
   t = 0;
   nextCycle = 0;
-  /** @type {import("video-creator/render").Sound?} */
+  /** @type {import("../../../src/render").Sound?} */
   lastSound = null;
 
   async setup() {

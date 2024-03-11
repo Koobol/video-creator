@@ -3,6 +3,8 @@ import { getEvent, clipAudioBuffer } from "./funcs.js";
 
 import { GeneratedEvent, GeneratingEvent } from "./events.js";
 
+import globals from "./globals.js";
+
 
 export default class VideoCreator extends HTMLElement {
   static #shadow;
@@ -67,7 +69,9 @@ export default class VideoCreator extends HTMLElement {
     super();
 
 
-    const shadow = this.attachShadow({ mode: "closed" });
+    const shadow = this.attachShadow({
+      mode: globals.testing ? "open" : "closed",
+    });
     shadow.appendChild(VideoCreator.#shadow.cloneNode(true));
 
 
