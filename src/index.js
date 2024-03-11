@@ -35,7 +35,8 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
-  seeking = false;
+  #seeking = false;
+  get seeking() { return this.#seeking; }
 
 
   #playWrapper;
@@ -101,12 +102,12 @@ export default class VideoCreator extends HTMLElement {
     this.#search.addEventListener("seeking", () => {
       this.dispatchEvent(new Event("seeking"));
 
-      this.seeking = true;
+      this.#seeking = true;
     });
     this.#search.addEventListener("seeked", () => {
       this.dispatchEvent(new Event("seeked"));
 
-      this.seeking = true;
+      this.#seeking = true;
     });
 
     this.#search.addEventListener("input", () => {

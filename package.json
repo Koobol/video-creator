@@ -15,7 +15,7 @@
   "scripts": {
     "test": "vitest",
     "example": "webpack serve --open --config testing/example/webpack.config.js",
-    "build": "rm -rf types && tsc"
+    "build": "rm -rf types && tsc -p tsconfig.build.json"
   },
   "repository": {
     "type": "git",

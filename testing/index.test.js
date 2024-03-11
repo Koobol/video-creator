@@ -1,10 +1,9 @@
-// @ts-check
 import VideoCreator from "../src/index";
 import { it, expect, beforeEach } from "vitest";
 
 import globals from "../src/globals";
 
-import { sleep, getEvent } from "../src/funcs";
+import { sleep } from "../src/funcs";
 
 
 globals.testing = true;
