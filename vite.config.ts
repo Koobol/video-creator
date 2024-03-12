@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { defineConfig } from "vitest/config";
 
 
@@ -8,5 +7,13 @@ export default defineConfig({
       enabled: true,
       name: "firefox",
     },
+    root: ".",
+  },
+
+
+  root: "testing/example",
+
+  server: {
+    open: true,
   },
 });
