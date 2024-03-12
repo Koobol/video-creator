@@ -1,4 +1,3 @@
-// @ts-check
 import VideoCreator from "../../src/index";
 
 

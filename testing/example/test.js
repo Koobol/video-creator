@@ -1,5 +1,8 @@
-// @ts-check
 import VideoSrc from "../../src/render";
+
+import video from "./video.webm?url";
+// import puppy from "./puppy.jpg?url";
+import beep from "./beep.wav?url";
 
 
 (class extends VideoSrc {
@@ -11,10 +14,10 @@ import VideoSrc from "../../src/render";
   lastSound = null;
 
   async setup() {
-    this.video = await this.getVideo("video.webm", { start: 1.4, end: 3.4 });
+    this.video = await this.getVideo(video, { start: 1.4, end: 3.4 });
     this.video.play();
 
-    this.playSound("beep.wav", { delay: 0.5, loop: true, loopEnd: 0.5 });
+    this.playSound(beep, { delay: 0.5, loop: true, loopEnd: 0.5 });
   }
 
   draw() {
@@ -23,7 +26,7 @@ import VideoSrc from "../../src/render";
 
     if (this.t >= Math.PI * 4) return true;
     if (this.t >= this.nextCycle * Math.PI / 2) {
-      // this.lastSound = this.playSound("beep.wav");
+      // this.lastSound = this.playSound(beep);
 
       this.ctx.fillStyle = `#${
         Math.floor(Math.random() * 0x1000000).toString(16).padStart(6, "0")

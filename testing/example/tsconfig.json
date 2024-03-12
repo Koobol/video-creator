@@ -1,18 +1,18 @@
 {
   "compilerOptions": {
     "composite": true,
-
+    
     "checkJs": true,
+
+    "rootDir": "../../",
 
     "module": "ESNext",
     "moduleResolution": "bundler",
-    
+
     "target": "ESNext",
-    
-    "rootDir": ".."
+
+    "types": ["vite/client"]
   },
-  "include": ["*.test.{j,t}s", "../src"],
-  "references": [
-    { "path": "example" }
-  ]
+  "exclude": ["dist"],
+  "include": ["**/*.js", "../../src"]
 }
