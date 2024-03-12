@@ -2,18 +2,14 @@
   "compilerOptions": {
     "composite": true,
 
-
     "checkJs": true,
 
-
-    "module": "ES2022",
+    "module": "ESNext",
     "moduleResolution": "bundler",
-
     
-    "target": "ES2022",
-
+    "target": "ESNext",
     
-    "rootDir": "../"
+    "rootDir": ".."
   },
-  "include": ["*.test.js", "../src"]
+  "include": ["*.test.{j,t}s", "../src"]
 }

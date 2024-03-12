@@ -6,11 +6,9 @@
     "strictNullChecks": true,
     "noImplicitAny": true,
 
-    "skipLibCheck": true,
-
+    "types": [],
 
     "checkJs": true,
-
 
     "noEmit": true
   },
