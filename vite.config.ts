@@ -12,6 +12,8 @@ export default defineConfig({
 
 
   root: "testing/example",
+  
+  base: "/video-creator/",
 
   server: {
     open: true,
