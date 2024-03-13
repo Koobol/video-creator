@@ -1,6 +1,6 @@
 import VideoSrc from "../../src/render";
 
-import video from "./video.webm?url";
+// import video from "./video.webm?url";
 // import puppy from "./puppy.jpg?url";
 import beep from "./beep.wav?url";
 
@@ -14,17 +14,17 @@ import beep from "./beep.wav?url";
   lastSound = null;
 
   async setup() {
-    this.video = await this.getVideo(video, { start: 1.4, end: 3.4 });
-    this.video.play();
+    // this.video = await this.getVideo(video, { start: 1.4, end: 3.4 });
+    // this.video.play();
 
     this.playSound(beep, { delay: 0.5, loop: true, loopEnd: 0.5 });
   }
 
   draw() {
-    if (!this.video) return false;
+    // if (!this.video) return false;
 
 
-    if (this.t >= Math.PI * 4) return true;
+    if (this.t >= Math.PI * 50) return true;
     if (this.t >= this.nextCycle * Math.PI / 2) {
       // this.lastSound = this.playSound(beep);
 
@@ -52,13 +52,13 @@ import beep from "./beep.wav?url";
     this.ctx.restore();
 
 
-    this.ctx.drawImage(
-      this.video.currentFrame,
-      0,
-      0,
-      this.video.width / 4,
-      this.video.height / 4,
-    );
+    // this.ctx.drawImage(
+    //   this.video.currentFrame,
+    //   0,
+    //   0,
+    //   this.video.width / 4,
+    //   this.video.height / 4,
+    // );
     // this.video.volume -= 0.02;
 
 

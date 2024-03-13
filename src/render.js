@@ -35,6 +35,13 @@ export default class VideoSrc {
   get currentTime() { return this.frame / this.frameRate; }
 
 
+  get width() { return this.canvas.width; }
+  get height() { return this.canvas.height; }
+
+
+  maxPixels = 1e9;
+
+
   /**
    * get an ImageBitmap containing the data from the requested file
    * @param {string | URL} src - the file containing the image
@@ -137,6 +144,20 @@ export default class VideoSrc {
 
 
     while (true) {
+      if (
+        (frames.length + 1) * videoSrc.width * videoSrc.height
+        > videoSrc.maxPixels
+      ) {
+        console.warn(
+          "VideoCreator exceeded max number of pixels, ending early. " +
+            "Try decreasing resolution, frame rate, or video length. " +
+            "Change VideoSrc#maxPixels to override.",
+        );
+        break;
+      }
+
+
+
       if (Date.now() >= checkNext) {
         await sleep();
 
