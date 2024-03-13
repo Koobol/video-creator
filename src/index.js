@@ -1,7 +1,7 @@
 import css from "./css.js";
 import { getEvent, clipAudioBuffer } from "./funcs.js";
 
-import { GeneratedEvent, GeneratingEvent } from "./events.js";
+import { GeneratedEvent, GeneratingEvent, RenderedEvent } from "./events.js";
 
 import globals from "./globals.js";
 
@@ -279,7 +279,7 @@ export default class VideoCreator extends HTMLElement {
     );
     if (signal === "abort") return;
 
-    const { frames, audioInstructions } = signal;
+    const { frames, audioInstructions, maxPixelsExceeded } = signal;
 
 
     this.#frames = frames;
@@ -359,7 +359,7 @@ export default class VideoCreator extends HTMLElement {
 
     this.#state = "rendered";
 
-    this.dispatchEvent(new Event("rendered"));
+    this.dispatchEvent(new RenderedEvent("rendered", { maxPixelsExceeded }));
   }
 
   #resetting = 0;
@@ -873,7 +873,7 @@ export default class VideoCreator extends HTMLElement {
  * @exports
  * @typedef {HTMLElementEventMap & {
  *   rendering: Event;
- *   rendered: Event;
+ *   rendered: RenderedEvent;
  *   generating: GeneratingEvent;
  *   generated: GeneratedEvent;
  *   play: Event;

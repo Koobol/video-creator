@@ -24,7 +24,7 @@ import beep from "./beep.wav?url";
     // if (!this.video) return false;
 
 
-    if (this.t >= Math.PI * 50) return true;
+    if (this.t >= Math.PI * 4) return true;
     if (this.t >= this.nextCycle * Math.PI / 2) {
       // this.lastSound = this.playSound(beep);
 

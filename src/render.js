@@ -143,6 +143,7 @@ export default class VideoSrc {
     await videoSrc.setup();
 
 
+    let maxPixelsExceeded = false;
     while (true) {
       if (
         (frames.length + 1) * videoSrc.width * videoSrc.height
@@ -153,6 +154,7 @@ export default class VideoSrc {
             "Try decreasing resolution, frame rate, or video length. " +
             "Change VideoSrc#maxPixels to override.",
         );
+        maxPixelsExceeded = true;
         break;
       }
 
@@ -218,6 +220,7 @@ export default class VideoSrc {
       type: "output",
       frames,
       audioInstructions,
+      maxPixelsExceeded,
     }), { transfer: frames });
   }
 }
@@ -241,6 +244,8 @@ export { default as Sound } from "./sound.js";
  * @prop {ImageBitmap[]} frames - the frames of video
  * @prop {AudioInstructions} audioInstructions
  *   - keys are audio file being used, values are the sounds being played
+ * @prop {boolean} [maxPixelsExceeded]
+ *   - whether or not the max pixel limit was exceeded
  * 
  * 
  * @typedef AbortSignal
