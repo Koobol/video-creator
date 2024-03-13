@@ -82,9 +82,6 @@ export default class VideoCreator extends HTMLElement {
     this.#ctx = /** @type {CanvasRenderingContext2D} */
       (this.#preview.getContext("2d", { alpha: false }));
 
-    this.#preview.width = this.width;
-    this.#preview.height = this.height;
-
 
     this.#playWrapper = /** @type {HTMLDivElement} */
       (shadow.querySelector("#play-wrapper"));
