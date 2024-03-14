@@ -5,65 +5,70 @@ import VideoSrc from "../../src/render";
 import beep from "./beep.wav?url";
 
 
-(class extends VideoSrc {
+class Example extends VideoSrc {
   ctx = /** @type {OffscreenCanvasRenderingContext2D} */
     (this.canvas.getContext("2d"));
-  t = 0;
-  nextCycle = 0;
-  /** @type {import("../../src/render").Sound?} */
-  lastSound = null;
+}
 
-  async setup() {
-    // this.video = await this.getVideo(video, { start: 1.4, end: 3.4 });
-    // this.video.play();
 
-    this.playSound(beep, { delay: 0.5, loop: true, loopEnd: 0.5 });
-  }
+const chunk = Example.defineChunk(videoSrc => {
+  let t = 0;
+  let nextCycle = 0;
 
-  draw() {
+
+  videoSrc.playSound(beep, { delay: 0.5, loop: true, loopEnd: 0.5 });
+
+
+  return () => {
     // if (!this.video) return false;
 
 
-    if (this.t >= Math.PI * 4) return true;
-    if (this.t >= this.nextCycle * Math.PI / 2) {
-      // this.lastSound = this.playSound(beep);
+    if (t >= Math.PI * 4) return true;
+    if (t >= nextCycle * Math.PI / 2) {
+      // videoSrc.lastSound = videoSrc.playSound(beep);
 
-      this.ctx.fillStyle = `#${
+      videoSrc.ctx.fillStyle = `#${
         Math.floor(Math.random() * 0x1000000).toString(16).padStart(6, "0")
       }`;
 
-      this.nextCycle++;
+      nextCycle++;
     }
 
-    this.ctx.save();
-    this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
-    this.ctx.rotate(this.t);
+    videoSrc.ctx.save();
+    videoSrc.ctx.translate(
+      videoSrc.canvas.width / 2,
+      videoSrc.canvas.height / 2,
+    );
+    videoSrc.ctx.rotate(t);
 
-    this.ctx.beginPath();
-    this.ctx.arc(
+    videoSrc.ctx.beginPath();
+    videoSrc.ctx.arc(
       0,
       -50,
       50,
       0,
       Math.PI * 2,
     );
-    this.ctx.fill();
+    videoSrc.ctx.fill();
 
-    this.ctx.restore();
+    videoSrc.ctx.restore();
 
 
-    // this.ctx.drawImage(
-    //   this.video.currentFrame,
+    // videoSrc.ctx.drawImage(
+    //   videoSrc.video.currentFrame,
     //   0,
     //   0,
-    //   this.video.width / 4,
-    //   this.video.height / 4,
+    //   videoSrc.video.width / 4,
+    //   videoSrc.video.height / 4,
     // );
-    // this.video.volume -= 0.02;
+    // videoSrc.video.volume -= 0.02;
 
 
-    this.t += Math.PI / this.frameRate;
+    t += Math.PI / videoSrc.frameRate;
 
     return false;
-  }
-}).render();
+  };
+});
+
+
+Example.render([chunk]);

@@ -87,33 +87,46 @@ export default class VideoSrc {
 
 
   /**
-   * function that will be called to set up the video
-   * @returns {void | Promise<void>}
+   * @template {typeof VideoSrc} T
+   * @this {T}
+   * @param {VideoChunk<InstanceType<T>>} chunk
    */
-  setup() {}
+  static defineChunk(chunk) {
+    return chunk;
+  }
 
 
-  /**
-   * function that will be called for every frame,
-   * return true to finish rendering
-   * @abstract
-   * @returns {boolean | Promise<boolean>}
-   */
-  draw() { throw new Error("no VideoSrc#draw function specified"); }
+  // /**
+  //  * function that will be called to set up the video
+  //  * @returns {void | Promise<void>}
+  //  */
+  // setup() {}
+  //
+  //
+  // /**
+  //  * function that will be called for every frame,
+  //  * return true to finish rendering
+  //  * @abstract
+  //  * @returns {boolean | Promise<boolean>}
+  //  */
+  // draw() { throw new Error("no VideoSrc#draw function specified"); }
 
 
   /**
    * use to define a VideoSrc as the one to render the video
-   * @this {typeof VideoSrc}
-   * @param {boolean} [oneTime] - whether or not to only handle one request
+   * @template {typeof VideoSrc} T
+   * @this {T}
+   * @param {VideoChunk<InstanceType<T>>[]} chunks
+   * @param {boolean} [oneTime] - whether or not to only render one video
    */
-  static async render(oneTime = false) {
+  static async render(chunks, oneTime = false) {
     if (!oneTime) {
-      while (true) await this.render(true);
+      while (true) await this.render(chunks, true);
     }
 
 
-    const { width, height, frameRate } = await getMessage("render init");
+    const { width, height, frameRate, chunk: initialChunk = 0 }
+      = await getMessage("render init");
 
 
     let aborting = false;
@@ -129,99 +142,101 @@ export default class VideoSrc {
 
     const canvas = new OffscreenCanvas(width, height);
 
-
-    const videoSrc = new this({ canvas, frameRate });
-
-
-    /** @type {RenderOutput["frames"]} */
-    const frames = [];
+    const videoSrc = /** @type {InstanceType<T>} */
+      (new this({ canvas, frameRate }));
 
 
-    let checkNext = Date.now() + 500;
+    {
+      /** @type {RenderOutput["frames"]} */
+      const frames = [];
 
 
-    await videoSrc.setup();
+      let checkNext = Date.now() + 500;
 
 
-    let maxPixelsExceeded = false;
-    while (true) {
-      if (
-        (frames.length + 1) * videoSrc.width * videoSrc.height
-        > videoSrc.maxPixels
-      ) {
-        console.warn(
-          "VideoCreator exceeded max number of pixels, ending early. " +
-            "Try decreasing resolution, frame rate, or video length. " +
-            "Change VideoSrc#maxPixels to override.",
-        );
-        maxPixelsExceeded = true;
-        break;
-      }
+      const draw = await chunks[initialChunk](videoSrc);
 
 
-
-      if (Date.now() >= checkNext) {
-        await sleep();
-
-        if (aborting) {
-          self.postMessage(/** @type {AbortSignal} */ ({
-            type: "abort",
-          }));
-          return;
+      let maxPixelsExceeded = false;
+      while (true) {
+        if (
+          (frames.length + 1) * videoSrc.width * videoSrc.height
+          > videoSrc.maxPixels
+        ) {
+          console.warn(
+            "VideoCreator exceeded max number of pixels, ending early. " +
+              "Try decreasing resolution, frame rate, or video length. " +
+              "Change VideoSrc#maxPixels to override.",
+          );
+          maxPixelsExceeded = true;
+          break;
         }
 
 
-        checkNext = Date.now() + 500;
+
+        if (Date.now() >= checkNext) {
+          await sleep();
+
+          if (aborting) {
+            self.postMessage(/** @type {AbortSignal} */ ({
+              type: "abort",
+            }));
+            return;
+          }
+
+
+          checkNext = Date.now() + 500;
+        }
+
+
+        if (await draw()) break;
+
+        frames.push(canvas.transferToImageBitmap());
+
+
+        videoSrc.#frame++;
+
+
+        updateVideos(videoSrc);
       }
 
 
-      if (await videoSrc.draw()) break;
-
-      frames.push(canvas.transferToImageBitmap());
-
-
-      videoSrc.#frame++;
-      
-
-      updateVideos(videoSrc);
-    }
+      /** @type {AudioInstructions} */
+      const audioInstructions = new Map();
+      sounds.get(videoSrc)?.forEach(sound => {
+        const src = sound.src.href;
 
 
-    /** @type {AudioInstructions} */
-    const audioInstructions = new Map();
-    sounds.get(videoSrc)?.forEach(sound => {
-      const src = sound.src.href;
+        if (!audioInstructions.has(src)) audioInstructions.set(src, new Set());
 
 
-      if (!audioInstructions.has(src)) audioInstructions.set(src, new Set());
+        audioInstructions.get(src)?.add({
+          startTime: sound.startTime,
+          stopTime: sound.stopTime ?? undefined,
 
+          offset: sound.offset,
+          duration: sound.duration ?? undefined,
 
-      audioInstructions.get(src)?.add({
-        startTime: sound.startTime,
-        stopTime: sound.stopTime ?? undefined,
+          startingVolume: sound.getVolumeAt(sound.startTime),
+          volumeChanges: getVolumeChanges(sound),
 
-        offset: sound.offset,
-        duration: sound.duration ?? undefined,
+          loop: sound.loop,
+          loopStart: sound.loopStart,
+          loopEnd: sound.loopEnd,
 
-        startingVolume: sound.getVolumeAt(sound.startTime),
-        volumeChanges: getVolumeChanges(sound),
-
-        loop: sound.loop,
-        loopStart: sound.loopStart,
-        loopEnd: sound.loopEnd,
-
-        startingSpeed: sound.getSpeedAt(sound.startTime),
-        speedChanges: getSpeedChanges(sound),
+          startingSpeed: sound.getSpeedAt(sound.startTime),
+          speedChanges: getSpeedChanges(sound),
+        });
       });
-    });
 
 
-    postMessage(/** @satisfies {RenderOutput} */ ({
-      type: "output",
-      frames,
-      audioInstructions,
-      maxPixelsExceeded,
-    }), { transfer: frames });
+      postMessage(/** @satisfies {RenderOutput} */ ({
+        type: "output",
+        frames,
+        audioInstructions,
+        maxPixelsExceeded,
+      }), { transfer: frames });
+    }
   }
 }
 
@@ -238,6 +253,11 @@ export { default as Sound } from "./sound.js";
  * @prop {number} width - the width of the video
  * @prop {number} height - the height of the video
  * @prop {number} frameRate - the framerate of the video
+ * @prop {number} [chunk] - which chunk to render first
+ *
+ * @typedef ChunkRequest
+ * @prop {"chunk"} type
+ * @prop {number} chunk
  *
  * @typedef RenderOutput
  * @prop {"output"} type
@@ -292,4 +312,16 @@ export { default as Sound } from "./sound.js";
  *
  *
  * @typedef {import("./sound.js").SoundOptions} SoundOptions
+ *
+ *
+ * @callback Draw
+ * @returns {boolean | Promise<boolean>}
+ */
+/**
+ * @exports
+ *
+ * @template {VideoSrc} T
+ * @callback VideoChunk
+ * @param {T} videoSrc
+ * @returns {Draw | Promise<Draw>}
  */
