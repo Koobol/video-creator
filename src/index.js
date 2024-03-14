@@ -85,8 +85,10 @@ export default class VideoCreator extends HTMLElement {
 
     this.#playWrapper = /** @type {HTMLDivElement} */
       (shadow.querySelector("#play-wrapper"));
-    this.#play = /** @type {HTMLButtonElement} */ (shadow.querySelector("#play"));
-    this.#search = /** @type {HTMLInputElement} */ (shadow.querySelector("input"));
+    this.#play = /** @type {HTMLButtonElement} */
+      (shadow.querySelector("#play"));
+    this.#search = /** @type {HTMLInputElement} */
+      (shadow.querySelector("input"));
 
     this.#downloadWrapper = /** @type {HTMLDivElement} */
       (shadow.querySelector("#download-wrapper"));
@@ -254,7 +256,8 @@ export default class VideoCreator extends HTMLElement {
 
     const signal = await new Promise(
       /**
-       * @param {(data: import("./render").RenderOutput | "abort") => void} resolve
+       * @param {(data: import("./render").RenderOutput | "abort") => void}
+       *   resolve
        */
       resolve => {
         /** @param {MessageEvent<import("./render").FromRender>} event */
@@ -790,7 +793,8 @@ export default class VideoCreator extends HTMLElement {
   /**
    * @overload
    * @param {K} type
-   * @param {(this: VideoCreator, event: VideoCreatorEventMap[K]) => void} callback
+   * @param {(this: VideoCreator, event: VideoCreatorEventMap[K]) => void}
+   *  callback
    * @param {boolean | AddEventListenerOptions} [options]
    * @returns {void}
    *
