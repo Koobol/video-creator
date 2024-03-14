@@ -1,6 +1,7 @@
-node_modules
+**/tsconfig*.json
+**/*.tsbuildinfo
 
-tsconfig.json
-
-vitest.config.ts
+vite.config.ts
 testing
+
+.github

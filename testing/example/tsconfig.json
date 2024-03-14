@@ -1,8 +1,7 @@
 {
+  "extends": ["../../tsconfig.base.json"],
   "compilerOptions": {
     "composite": true,
-    
-    "checkJs": true,
 
     "rootDir": "../../",
 

@@ -2,3 +2,5 @@ node_modules
 types
 
 testing/example/dist
+
+**/*.tsbuildinfo

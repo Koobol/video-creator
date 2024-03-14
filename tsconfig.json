@@ -1,19 +1,7 @@
 {
-  "compilerOptions": {
-    "module": "ES2022",
-    "target": "ES2022",
-
-    "strictNullChecks": true,
-    "noImplicitAny": true,
-
-    "types": [],
-
-    "checkJs": true,
-
-    "noEmit": true
-  },
-  "include": ["src"],
   "references": [
-    { "path": "testing" }
-  ]
+    { "path": "testing" },
+    { "path": "tsconfig.build.json" }
+  ],
+  "files": []
 }
