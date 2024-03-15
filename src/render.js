@@ -133,15 +133,16 @@ export default class VideoSrc {
 
 
     let aborting = false;
-    self.addEventListener(
-      "message",
-      /** @param {MessageEvent<ToRender>} event */
-      ({ data }) => {
-        if (data.type !== "abort") return;
+    /** @param {MessageEvent<ToRender>} event */
+    const abortListener = ({ data }) => {
+      if (data.type !== "abort") return;
 
-        aborting = true;
-      },
-    );
+      aborting = true;
+
+
+      self.removeEventListener("message", abortListener);
+    }
+    self.addEventListener("message", abortListener);
 
     const canvas = new OffscreenCanvas(width, height);
 
@@ -161,6 +162,9 @@ export default class VideoSrc {
 
         if (message.type === "render init") {
           VideoSrc.#init = message;
+
+
+          self.removeEventListener("message", abortListener);
           return;
         }
 
