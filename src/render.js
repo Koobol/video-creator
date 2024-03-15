@@ -56,6 +56,7 @@ export default class VideoSrc {
 
   /**
    * play the requested sound
+   * @this {VideoSrc}
    * @param {string | URL} src - the file containing the sound
    * @param {SoundOptions} [options]
    *   - the options of the sound
@@ -67,6 +68,7 @@ export default class VideoSrc {
 
   /**
    * get an ImageBitmap containing the data from the requested file
+   * @this {VideoSrc}
    * @param {string | URL} src - the file containing the video
    * @param {VideoOptions} options
    */
@@ -91,9 +93,7 @@ export default class VideoSrc {
    * @this {T}
    * @param {VideoChunk<InstanceType<T>>} chunk
    */
-  static defineChunk(chunk) {
-    return chunk;
-  }
+  static defineChunk(chunk) { return chunk; }
 
 
   // /**

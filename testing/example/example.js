@@ -11,12 +11,15 @@ class Example extends VideoSrc {
 }
 
 
-const chunk = Example.defineChunk(videoSrc => {
+const chunk = Example.defineChunk(example => {
+  const { ctx, width, height, frameRate } = example;
+
+
   let t = 0;
   let nextCycle = 0;
 
 
-  videoSrc.playSound(beep, { delay: 0.5, loop: true, loopEnd: 0.5 });
+  example.playSound(beep, { delay: 0.5, loop: true, loopEnd: 0.5 });
 
 
   return () => {
@@ -27,34 +30,34 @@ const chunk = Example.defineChunk(videoSrc => {
     if (t >= nextCycle * Math.PI / 2) {
       // videoSrc.lastSound = videoSrc.playSound(beep);
 
-      videoSrc.ctx.fillStyle = `#${
+      ctx.fillStyle = `#${
         Math.floor(Math.random() * 0x1000000).toString(16).padStart(6, "0")
       }`;
 
       nextCycle++;
     }
 
-    videoSrc.ctx.save();
-    videoSrc.ctx.translate(
-      videoSrc.canvas.width / 2,
-      videoSrc.canvas.height / 2,
+    ctx.save();
+    ctx.translate(
+      width / 2,
+      height / 2,
     );
-    videoSrc.ctx.rotate(t);
+    ctx.rotate(t);
 
-    videoSrc.ctx.beginPath();
-    videoSrc.ctx.arc(
+    ctx.beginPath();
+    ctx.arc(
       0,
       -50,
       50,
       0,
       Math.PI * 2,
     );
-    videoSrc.ctx.fill();
+    ctx.fill();
 
-    videoSrc.ctx.restore();
+    ctx.restore();
 
 
-    // videoSrc.ctx.drawImage(
+    // ctx.drawImage(
     //   videoSrc.video.currentFrame,
     //   0,
     //   0,
@@ -64,7 +67,7 @@ const chunk = Example.defineChunk(videoSrc => {
     // videoSrc.video.volume -= 0.02;
 
 
-    t += Math.PI / videoSrc.frameRate;
+    t += Math.PI / frameRate;
 
     return false;
   };
