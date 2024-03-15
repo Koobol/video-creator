@@ -99,6 +99,7 @@ export default class VideoSrc {
 
   /**
    * function that will be called to set up the video if no chunks
+   * @deprecated
    * @returns {void | Promise<void>}
    */
   setup() {}
@@ -107,6 +108,7 @@ export default class VideoSrc {
   /**
    * function that will be called for every frame if no chunks,
    * return true to finish rendering
+   * @deprecated
    * @type {Draw}
    */
   draw() { throw new Error("no chunks or VideoSrc#draw function specified"); }
