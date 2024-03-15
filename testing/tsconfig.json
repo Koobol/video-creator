@@ -10,7 +10,7 @@
     
     "rootDir": ".."
   },
-  "include": ["*.test.{j,t}s", "../src"],
+  "include": ["*.test.{j,t}s", "videos", "../src"],
   "references": [
     { "path": "example" }
   ]

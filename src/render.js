@@ -112,6 +112,8 @@ export default class VideoSrc {
   // draw() { throw new Error("no VideoSrc#draw function specified"); }
 
 
+  /** @type {RenderInit?} */
+  static #init = null;
   /**
    * use to define a VideoSrc as the one to render the video
    * @template {typeof VideoSrc} T
@@ -125,8 +127,9 @@ export default class VideoSrc {
     }
 
 
-    const { width, height, frameRate, chunk: initialChunk = 0 }
-      = await getMessage("render init");
+    const init = VideoSrc.#init ?? await getMessage("render init");
+    VideoSrc.#init = null;
+    const { width, height, frameRate } = init;
 
 
     let aborting = false;
@@ -146,7 +149,26 @@ export default class VideoSrc {
       (new this({ canvas, frameRate }));
 
 
-    {
+    /** @type {number?} */
+    let chunk = init.chunk ?? 0;
+
+
+    while (true) {
+      if (chunk === null) {
+        const message =
+          await Promise.any([getMessage("chunk"), getMessage("render init")]);
+
+
+        if (message.type === "render init") {
+          VideoSrc.#init = message;
+          return;
+        }
+
+        chunk = message.chunk;
+      }
+      if (!(chunk in chunks)) throw new Error("Invalid chunk");
+
+
       /** @type {RenderOutput["frames"]} */
       const frames = [];
 
@@ -154,7 +176,7 @@ export default class VideoSrc {
       let checkNext = Date.now() + 500;
 
 
-      const draw = await chunks[initialChunk](videoSrc);
+      const draw = await chunks[chunk](videoSrc);
 
 
       let maxPixelsExceeded = false;
@@ -236,6 +258,9 @@ export default class VideoSrc {
         audioInstructions,
         maxPixelsExceeded,
       }), { transfer: frames });
+
+
+      chunk = null;
     }
   }
 }
@@ -284,7 +309,7 @@ export { default as Sound } from "./sound.js";
  * @prop {ImageBitmap[]} frames
  * 
  * 
- * @typedef {RenderInit | VideoResponse | AbortSignal} ToRender
+ * @typedef {RenderInit | ChunkRequest | VideoResponse | AbortSignal} ToRender
  * @typedef {RenderOutput | VideoRequest | AbortSignal} FromRender
  * 
  * 

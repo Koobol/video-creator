@@ -1,12 +1,13 @@
-// @ts-check
 import VideoSrc from "../../src/render";
 
 
-(class extends VideoSrc {
+class Basic extends VideoSrc {
   ctx = this.canvas.getContext("2d");
+}
 
 
-  draw() {
-    return this.frame >= 3;
-  }
-}).render();
+Basic.render([
+  basic => {
+    return () => basic.frame > 2;
+  },
+]);
