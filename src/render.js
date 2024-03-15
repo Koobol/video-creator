@@ -70,12 +70,13 @@ export default class VideoSrc {
    * get an ImageBitmap containing the data from the requested file
    * @this {VideoSrc}
    * @param {string | URL} src - the file containing the video
-   * @param {VideoOptions} options
+   * @param {VideoOptions} [options]
    */
-  async getVideo(src, { start, end, volume }) {
+  async getVideo(src, { start, end, volume } = {}) {
     postMessage(/** @satisfies {VideoRequest} */ ({
       type: "video request",
       src: new URL(src, location.href).href,
+      frameRate: this.frameRate,
       start,
       end,
     }));
@@ -311,6 +312,7 @@ export { default as Sound } from "./sound.js";
  * @typedef VideoRequest
  * @prop {"video request"} type
  * @prop {string} src
+ * @prop {number} frameRate
  * @prop {number} [start] - where to start the video
  * @prop {number} [end] - where to end the video
  * 

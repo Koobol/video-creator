@@ -1,5 +1,6 @@
 import css from "./css.js";
 import { getEvent, clipAudioBuffer } from "./funcs.js";
+import handleVideoRequests from "./handle-video-requests.js";
 
 import { GeneratedEvent, GeneratingEvent, RenderedEvent } from "./events.js";
 
@@ -169,6 +170,8 @@ export default class VideoCreator extends HTMLElement {
   async render(worker) {
     if (worker !== undefined) {
       this.#worker = worker;
+      handleVideoRequests(worker);
+
       this.src = null;
     } else if (this.#worker === null) {
       if (this.src === null) throw new Error("No source file given.");
@@ -177,6 +180,7 @@ export default class VideoCreator extends HTMLElement {
       this.#worker = new Worker(new URL(this.src, location.href), {
         type: "module",
       });
+      handleVideoRequests(this.#worker);
     }
     worker ??= this.#worker;
     this.#worker ??= worker;
@@ -201,58 +205,6 @@ export default class VideoCreator extends HTMLElement {
       height: this.#preview.height,
       frameRate: this.frameRate,
     }));
-
-
-    worker.addEventListener(
-      "message",
-      /** @param {MessageEvent<import("./render").FromRender>} event */
-      async ({ data }) => {
-        if (data.type !== "video request") return;
-
-
-        const { src, start = 0 } = data;
-
-
-        const video = document.createElement("video");
-        video.src = src;
-
-
-        await getEvent(video, "loadedmetadata");
-
-
-        if (start) video.currentTime = start;
-
-        const { end = video.duration } = data;
-
-
-        await getEvent(video, "canplaythrough");
-
-
-        /** @type {ImageBitmap[]} */
-        const frames = [];
-
-        while (true) {
-          if (video.readyState < 2) await getEvent(video, "canplaythrough");
-
-          frames.push(await createImageBitmap(video));
-
-
-          if (video.currentTime >= end) break;
-
-          video.currentTime = 1 / this.frameRate * frames.length + start;
-        }
-
-
-        worker?.postMessage(
-          /** @satisfies {import("./render").VideoResponse} */ ({
-            type: "video response",
-            src,
-            frames,
-          }),
-          frames,
-        );
-      }
-    );
 
 
     const signal = await new Promise(
