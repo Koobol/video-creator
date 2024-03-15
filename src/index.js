@@ -797,6 +797,7 @@ export default class VideoCreator extends HTMLElement {
 
 
   /**
+   * @template {keyof VideoCreatorEventMap} K
    * @overload
    * @param {K} type
    * @param {(this: VideoCreator, event: VideoCreatorEventMap[K]) => void}
@@ -811,14 +812,37 @@ export default class VideoCreator extends HTMLElement {
    * @returns {void}
    *
    * @method
-   * @template {keyof VideoCreatorEventMap} K
    * @param {string} type
    * @param {EventListenerOrEventListenerObject} callback
    * @param {boolean | AddEventListenerOptions} [options]
    * @returns {void}
    */
   addEventListener(type, callback, options) {
-    super.addEventListener(type, callback, options);
+    return super.addEventListener(type, callback, options);
+  }
+  /**
+   * @template {keyof VideoCreatorEventMap} K
+   * @overload
+   * @param {K} type
+   * @param {(this: VideoCreator, event: VideoCreatorEventMap[K]) => void}
+   *  callback
+   * @param {boolean | AddEventListenerOptions} [options]
+   * @returns {void}
+   *
+   * @overload
+   * @param {string} type
+   * @param {EventListenerOrEventListenerObject} callback
+   * @param {boolean | AddEventListenerOptions} [options]
+   * @returns {void}
+   *
+   * @method
+   * @param {string} type
+   * @param {EventListenerOrEventListenerObject} callback
+   * @param {boolean | AddEventListenerOptions} [options]
+   * @returns {void}
+   */
+  removeEventListener(type, callback, options) {
+    return super.removeEventListener(type, callback, options);
   }
 
 
