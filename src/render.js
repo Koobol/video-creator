@@ -89,6 +89,7 @@ export default class VideoSrc {
 
 
   /**
+   * create a chunk of video
    * @template {typeof VideoSrc} T
    * @this {T}
    * @param {VideoChunk<InstanceType<T>>} chunk
@@ -96,20 +97,19 @@ export default class VideoSrc {
   static defineChunk(chunk) { return chunk; }
 
 
-  // /**
-  //  * function that will be called to set up the video
-  //  * @returns {void | Promise<void>}
-  //  */
-  // setup() {}
-  //
-  //
-  // /**
-  //  * function that will be called for every frame,
-  //  * return true to finish rendering
-  //  * @abstract
-  //  * @returns {boolean | Promise<boolean>}
-  //  */
-  // draw() { throw new Error("no VideoSrc#draw function specified"); }
+  /**
+   * function that will be called to set up the video if no chunks
+   * @returns {void | Promise<void>}
+   */
+  setup() {}
+
+
+  /**
+   * function that will be called for every frame if no chunks,
+   * return true to finish rendering
+   * @type {Draw}
+   */
+  draw() { throw new Error("no chunks or VideoSrc#draw function specified"); }
 
 
   /** @type {RenderInit?} */
@@ -118,10 +118,10 @@ export default class VideoSrc {
    * use to define a VideoSrc as the one to render the video
    * @template {typeof VideoSrc} T
    * @this {T}
-   * @param {VideoChunk<InstanceType<T>>[]} chunks
+   * @param {VideoChunk<InstanceType<T>>[]} [chunks] - the chunks of video
    * @param {boolean} [oneTime] - whether or not to only render one video
    */
-  static async render(chunks, oneTime = false) {
+  static async render(chunks = [], oneTime = false) {
     if (!oneTime) {
       while (true) await this.render(chunks, true);
     }
@@ -166,7 +166,8 @@ export default class VideoSrc {
 
         chunk = message.chunk;
       }
-      if (!(chunk in chunks)) throw new Error("Invalid chunk");
+      if (!(chunk in chunks) && chunks.length !== 0)
+        throw new Error("Invalid chunk");
 
 
       /** @type {RenderOutput["frames"]} */
@@ -176,7 +177,11 @@ export default class VideoSrc {
       let checkNext = Date.now() + 500;
 
 
-      const draw = await chunks[chunk](videoSrc);
+      /** @type {Draw} */
+      const draw = chunks.length > 0 ?
+        await chunks[chunk](videoSrc) :
+        videoSrc.draw.bind(videoSrc);
+      if (chunks.length === 0) await videoSrc.setup();
 
 
       let maxPixelsExceeded = false;
