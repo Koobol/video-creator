@@ -173,6 +173,7 @@ export default class VideoCreator extends HTMLElement {
     } else if (this.#worker === null) {
       if (this.src === null) throw new Error("No source file given.");
 
+      console.log(true);
       this.#worker = new Worker(new URL(this.src, location.href), {
         type: "module",
       });
@@ -366,8 +367,11 @@ export default class VideoCreator extends HTMLElement {
   }
 
   #resetting = 0;
-  /** reset the VideoCreator to waiting */
-  reset() {
+  /**
+   * reset the VideoCreator to waiting
+   * @param {boolean} [complete] - if set to true will erase worker
+   */
+  reset(complete = false) {
     this.#disabled = true;
 
 
@@ -375,6 +379,8 @@ export default class VideoCreator extends HTMLElement {
       type: "abort",
     }));
     if (this.#state === "rendering") this.#resetting++;
+    
+    if (complete) this.#worker = null;
 
 
     this.#currentVideo = null;
@@ -835,13 +841,9 @@ export default class VideoCreator extends HTMLElement {
 
     switch (name) {
       case "src":
-        if (newValue !== null) {
-          this.render();
-          return;
-        }
+        this.reset(true);
 
-        this.reset();
-        this.#worker = null;
+        if (newValue !== null) this.render();
         return;
       case "width":
         this.#preview.width = this.width;
