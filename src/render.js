@@ -159,8 +159,17 @@ export default class VideoSrc {
 
     while (true) {
       if (chunk === null) {
-        const message =
-          await Promise.any([getMessage("chunk"), getMessage("render init")]);
+        /** @type {RenderInit | ChunkRequest} */
+        const message = await new Promise(resolve => {
+          /** @param {MessageEvent<ToRender>} event */
+          const onMessage = ({ data }) => {
+            if (data.type !== "chunk" && data.type !== "render init") return;
+
+            resolve(data);
+            self.removeEventListener("message", onMessage);
+          }
+          self.addEventListener("message", onMessage);
+        });
 
 
         if (message.type === "render init") {
