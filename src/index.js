@@ -152,6 +152,9 @@ export default class VideoCreator extends HTMLElement {
   /** @type {Worker?} */
   #worker = null;
   get worker() { return this.#worker; }
+  
+  #chunk = 0;
+  get chunk() { return this.#chunk; }
 
   /**
    * @type {(
@@ -165,25 +168,19 @@ export default class VideoCreator extends HTMLElement {
   get state() { return this.#state; }
   /**
    * render the video with the given worker
-   * @param {Worker} [worker]
+   * @param {RenderOptions} [options]
    */
-  async render(worker) {
+  async render({ worker, chunk = this.chunk } = {}) {
     if (worker !== undefined) {
-      this.#worker = worker;
       handleVideoRequests(worker);
 
       this.src = null;
-    } else if (this.#worker === null) {
-      if (this.src === null) throw new Error("No source file given.");
-
-      console.log(true);
-      this.#worker = new Worker(new URL(this.src, location.href), {
+    } else if (this.#worker === null && this.src !== null) {
+      worker = new Worker(new URL(this.src, location.href), {
         type: "module",
       });
-      handleVideoRequests(this.#worker);
+      handleVideoRequests(worker);
     }
-    worker ??= this.#worker;
-    this.#worker ??= worker;
 
 
     this.#currentVideo = {
@@ -199,12 +196,27 @@ export default class VideoCreator extends HTMLElement {
     this.dispatchEvent(new Event("rendering"));
 
 
-    worker.postMessage(/** @satisfies {import("./render").RenderInit} */ ({
-      type: "render init",
-      width: this.#preview.width,
-      height: this.#preview.height,
-      frameRate: this.frameRate,
-    }));
+    if (worker !== undefined)
+      worker.postMessage(/** @satisfies {import("./render").RenderInit} */ ({
+        type: "render init",
+        width: this.width,
+        height: this.height,
+        frameRate: this.frameRate,
+        chunk,
+      }));
+    else {
+      if (this.#worker === null) throw new Error("No source file given");
+      worker = this.#worker;
+
+      worker.postMessage(/** @satisfies {import("./render").ChunkRequest} */ ({
+        type: "chunk",
+        chunk,
+      }));
+    }
+    this.#worker = worker;
+
+
+    this.#chunk = chunk;
 
 
     const signal = await new Promise(
@@ -332,7 +344,10 @@ export default class VideoCreator extends HTMLElement {
     }));
     if (this.#state === "rendering") this.#resetting++;
     
-    if (complete) this.#worker = null;
+    if (complete) {
+      this.#worker = null;
+      this.#chunk = 0;
+    }
 
 
     this.#currentVideo = null;
@@ -853,6 +868,8 @@ export default class VideoCreator extends HTMLElement {
 
 /**
  * @exports
+ *
+ *
  * @typedef {HTMLElementEventMap & {
  *   rendering: Event;
  *   rendered: RenderedEvent;
@@ -866,6 +883,11 @@ export default class VideoCreator extends HTMLElement {
  *   reset: Event;
  *   slowframerate: Event;
  * }} VideoCreatorEventMap
+ *
+ *
+ * @typedef RenderOptions
+ * @prop {Worker} [worker] - the worker to use for rendering
+ * @prop {number} [chunk] - the chunk to render
  */
 
 

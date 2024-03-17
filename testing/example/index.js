@@ -6,7 +6,8 @@ customElements.define("video-creator", VideoCreator);
 
 const videoCreator = /** @type {VideoCreator} */
   (document.querySelector("video-creator"));
-videoCreator.render(new Worker(
-  new URL("example.js", import.meta.url),
-  { type: "module" },
-));
+videoCreator.render({
+  worker: new Worker(new URL("example.js", import.meta.url), {
+    type: "module",
+  }),
+});

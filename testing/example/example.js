@@ -1,6 +1,6 @@
 import VideoSrc from "../../src/render";
 
-import videoUrl from "./video.webm?url";
+// import videoUrl from "./video.webm?url";
 // import puppy from "./puppy.jpg?url";
 import beep from "./beep.wav?url";
 
@@ -11,7 +11,7 @@ class Example extends VideoSrc {
 }
 
 
-const chunk = Example.defineChunk(async example => {
+const rotatingCircle = Example.defineChunk(async example => {
   const { ctx, width, height, frameRate } = example;
 
 
@@ -74,5 +74,25 @@ const chunk = Example.defineChunk(async example => {
   };
 });
 
+const movingSquare = Example.defineChunk(example => {
+  const { ctx, width, height, frameRate } = example;
 
-Example.render([chunk]);
+
+  let x = 0;
+
+
+  ctx.fillStyle = "white";
+  return () => {
+    if (x > width - 100) return true;
+
+
+    ctx.fillRect(x, height / 2 - 50, 100, 100);
+    x += 200 / frameRate;
+
+
+    return false;
+  }
+});
+
+
+Example.render([rotatingCircle, movingSquare]);

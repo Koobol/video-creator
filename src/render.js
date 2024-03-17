@@ -158,6 +158,9 @@ export default class VideoSrc {
 
 
     while (true) {
+      videoSrc.#frame = 0;
+
+
       if (chunk === null) {
         /** @type {RenderInit | ChunkRequest} */
         const message = await new Promise(resolve => {

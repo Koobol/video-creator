@@ -28,7 +28,7 @@ beforeEach(() => {
 const render = (worker = new Worker(
   new URL("videos/basic.js", import.meta.url),
   { type: "module" },
-)) => videoCreator.render(worker);
+)) => videoCreator.render({ worker });
 
 
 it("exists", () => {
@@ -56,7 +56,7 @@ it("can be rendered", async () => {
     new URL("videos/basic.js", import.meta.url),
     { type: "module" },
   )
-  const rendered = videoCreator.render(worker);
+  const rendered = videoCreator.render({ worker });
   
   expect(videoCreator.worker).toBe(worker);
 
