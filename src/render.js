@@ -185,8 +185,9 @@ export default class VideoSrc {
 
         chunk = message.chunk;
       }
-      if (!(chunk in chunks) && chunks.length !== 0)
-        throw new Error("Invalid chunk");
+      if (chunks.length !== 0)
+        chunk = Math.floor(Math.max(0, Math.min(chunk, chunks.length - 1)));
+
 
 
       /** @type {RenderOutput["frames"]} */
