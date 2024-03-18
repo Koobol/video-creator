@@ -1,4 +1,4 @@
-import VideoSrc from "../../src/render";
+import VideoSrc, { Video } from "../../src/render";
 
 import videoUrl from "./video.webm?url";
 // import puppy from "./puppy.jpg?url";
@@ -8,6 +8,9 @@ import beep from "./beep.wav?url";
 class Example extends VideoSrc {
   ctx = /** @type {OffscreenCanvasRenderingContext2D} */
     (this.canvas.getContext("2d"));
+
+  /** @type {Video?} */
+  video = null;
 }
 
 
@@ -17,10 +20,6 @@ const rotatingCircle = Example.defineChunk(async example => {
 
   let t = 0;
   let nextCycle = 0;
-
-
-  const video = await example.getVideo(videoUrl, { start: 1.9, end: 3.9 });
-  video.play();
 
 
   example.playSound(beep, { delay: 0.5, loop: true, loopEnd: 0.5 });
@@ -58,16 +57,6 @@ const rotatingCircle = Example.defineChunk(async example => {
     ctx.restore();
 
 
-    ctx.drawImage(
-      video.currentFrame,
-      0,
-      0,
-      video.width / 4,
-      video.height / 4,
-    );
-    // video.volume -= 0.02;
-
-
     t += Math.PI / frameRate;
 
     return false;
@@ -81,12 +70,17 @@ const movingSquare = Example.defineChunk(example => {
   let x = 0;
 
 
-  ctx.fillStyle = "white";
   return () => {
     if (x > width - 100) return true;
 
 
+    ctx.save();
+
+    ctx.fillStyle = "white";
     ctx.fillRect(x, height / 2 - 50, 100, 100);
+
+    ctx.restore();
+
     x += 200 / frameRate;
 
 
@@ -94,5 +88,50 @@ const movingSquare = Example.defineChunk(example => {
   }
 });
 
+const video = Example.defineChunk(async example => {
+  if (example.video === null)
+    example.video = await example.getVideo(videoUrl, { start: 1.9, end: 3.9 });
 
-Example.render([rotatingCircle, movingSquare]);
+
+  const { video, ctx, width, height } = example;
+
+
+  video.currentTime = 0;
+  video.play();
+
+
+  const text = "This is a prerecorded video file";
+
+
+  return () => {
+    ctx.save();
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, video.width / 2 + 1, video.height / 2 + 1);
+    ctx.drawImage(
+      video.currentFrame,
+      0,
+      0,
+      video.width / 2,
+      video.height / 2,
+    );
+    // video.volume -= 0.02;
+
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    ctx.font = "30px Arial";
+    ctx.fillText(text, width - 10, height - 10);
+
+    ctx.strokeStyle = "white";
+    ctx.beginPath();
+    ctx.moveTo(width - 10 - ctx.measureText(text).width / 2, height - 40);
+    ctx.lineTo(width / 2 + 5, height / 2 + 5);
+    ctx.stroke();
+
+    ctx.restore();
+    return !video.playing;
+  }
+});
+
+
+Example.render([rotatingCircle, movingSquare, video]);
