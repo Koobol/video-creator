@@ -94,7 +94,6 @@ export default class VideoCreator extends HTMLElement {
       (shadow.querySelector("input[type='range']"));
     this.#chunkInput = /** @type {HTMLInputElement} */
       (shadow.querySelector("input[type='number']"));
-    this.#chunkInput.valueAsNumber = this.chunk;
 
     this.#downloadWrapper = /** @type {HTMLDivElement} */
       (shadow.querySelector("#download-wrapper"));
@@ -227,7 +226,7 @@ export default class VideoCreator extends HTMLElement {
     };
 
 
-    if (this.state !== "waiting") this.reset();
+    if (this.state === "rendered") this.reset();
     this.#state = "rendering";
 
     this.dispatchEvent(new Event("rendering"));
@@ -376,11 +375,12 @@ export default class VideoCreator extends HTMLElement {
     this.#disabled = true;
 
 
-    this.#worker?.postMessage(/** @type {import("./render").AbortSignal} */ ({
-      type: "abort",
-    }));
-    if (this.#state === "rendering") this.#resetting++;
-    
+    if (this.#state === "rendering") {
+      this.#worker?.postMessage(/** @type {import("./render").AbortSignal} */ ({
+        type: "abort",
+      }));
+      this.#resetting++;
+    }
     if (complete) {
       this.#worker = null;
       this.#chunk = this.defaultChunk;

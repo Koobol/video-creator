@@ -151,7 +151,6 @@ export default class VideoSrc {
 
 
     let aborting = false;
-    // TODO fix problem with premature aborting
     /** @param {MessageEvent<ToRender>} event */
     const abortListener = ({ data }) => {
       if (data.type !== "abort") return;
