@@ -176,19 +176,25 @@ export default class VideoCreator extends HTMLElement {
   get state() { return this.#state; }
   /**
    * @overload
-   * render the video
-   * @param {RenderOptions} [options]
-   * @returns {Promise<void>}
+   * render the video,
+   * returns true if max pixel limit was exceeded while rendering,
+   * returns null if rendering was aborted
+   * @param {Worker} [worker]
+   * @returns {Promise<boolean | null>}
    *
    * @overload
-   * render the video
-   * @param {Worker} [worker]
-   * @returns {Promise<void>}
+   * render the video,
+   * returns true if max pixel limit was exceeded while rendering,
+   * returns null if rendering was aborted
+   * @param {RenderOptions} [options]
+   * @returns {Promise<boolean | null>}
    *
    * @method
-   * render the video
+   * render the video,
+   * returns true if max pixel limit was exceeded while rendering,
+   * returns null if rendering was aborted
    * @param {RenderOptions | Worker} [optionsOrWorker]
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean | null>}
    */
   async render(optionsOrWorker = {}) {
     /** @type {Worker=} */
@@ -281,7 +287,7 @@ export default class VideoCreator extends HTMLElement {
         worker?.addEventListener("message", onMessage);
       },
     );
-    if (signal === "abort") return;
+    if (signal === "abort") return null;
 
     const { frames, audioInstructions, maxPixelsExceeded } = signal;
 
@@ -364,6 +370,9 @@ export default class VideoCreator extends HTMLElement {
     this.#state = "rendered";
 
     this.dispatchEvent(new RenderedEvent("rendered", { maxPixelsExceeded }));
+
+
+    return maxPixelsExceeded ?? false;
   }
 
   #resetting = 0;
