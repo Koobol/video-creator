@@ -153,7 +153,7 @@ export default class VideoCreator extends HTMLElement {
   #worker = null;
   get worker() { return this.#worker; }
   
-  #chunk = 0;
+  #chunk = this.defaultChunk;
   get chunk() { return this.#chunk; }
 
   /**
@@ -346,7 +346,7 @@ export default class VideoCreator extends HTMLElement {
     
     if (complete) {
       this.#worker = null;
-      this.#chunk = 0;
+      this.#chunk = this.defaultChunk;
     }
 
 
@@ -412,6 +412,9 @@ export default class VideoCreator extends HTMLElement {
     return !isNaN(framerateAttr) && framerateAttr > 0 ? framerateAttr : 30;
   }
   set frameRate(value) { this.setAttribute("framerate", `${value}`); }
+
+  get defaultChunk() { return Number(this.getAttribute("chunk")); }
+  set defaultChunk(chunk) { this.setAttribute("chunk", chunk.toString()); }
 
   get controls() {
     const controls = this.getAttribute("controls") ?? "none";
