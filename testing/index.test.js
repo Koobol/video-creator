@@ -82,10 +82,6 @@ it("can generate", async () => {
   await render();
   
 
-  expect(await videoCreator.generateVideo()).toBeInstanceOf(Blob);
-  expect(videoCreator.state).toBe("rendered");
-
-
   expect(await videoCreator.generateVideo(true)).toBeInstanceOf(Blob);
   expect(videoCreator.state).toBe("waiting");
 });

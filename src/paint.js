@@ -2,23 +2,28 @@
  * @exports
  * 
  * 
- * 
  * @typedef PaintInit
- * @prop {ImageBitmap[]} frames
  * @prop {OffscreenCanvas} offscreen
  * @prop {number} frameRate
+ *
+ * @typedef PaintRequest
+ * @prop {ImageBitmap[]} frames
  */
 
 
-import { sleep } from "./funcs.js";
+import { sleep, getEvent } from "./funcs.js";
 
+
+const { data: { frameRate, offscreen } } =
+  /** @type {MessageEvent<PaintInit>} */ (await getEvent(self, "message"));
+let warned = false;
 
 self.addEventListener(
   "message",
   /**
-   * @param {MessageEvent<PaintInit>} event
+   * @param {MessageEvent<PaintRequest>} event
    */
-  async ({ data: { frames, offscreen, frameRate }}) => {
+  async ({ data: { frames }}) => {
     const interval = 1 / frameRate * 1000;
 
 
@@ -31,9 +36,6 @@ self.addEventListener(
 
     const ctx = /** @type {ImageBitmapRenderingContext} */
       (offscreen.getContext("bitmaprenderer"));
-
-
-    let warned = false;
 
 
     while (true) {

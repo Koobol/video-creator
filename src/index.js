@@ -2,7 +2,7 @@ import css from "./css.js";
 import { getEvent, clipAudioBuffer } from "./funcs.js";
 import handleVideoRequests from "./handle-video-requests.js";
 
-import { GeneratedEvent, GeneratingEvent, RenderedEvent } from "./events.js";
+import { GeneratedEvent, RenderedEvent } from "./events.js";
 
 import globals from "./globals.js";
 
@@ -132,7 +132,7 @@ export default class VideoCreator extends HTMLElement {
     });
 
     this.#download.addEventListener("click", async () => {
-      const video = await this.generateVideo(true);
+      const video = await this.generateVideo();
 
 
       const a = document.createElement("a");
@@ -673,15 +673,12 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
-  /**
-   * @param {boolean} [consuming]
-   *   - whether or not to consume the video for performance
-   */
-  async generateVideo(consuming = false) {
-    if (this.#frames === null) throw new Error("Video isn't rendered yet");
+  /** generate a video file from the current src */
+  async generateVideo() {
+    if (this.chunks === null) throw new Error("Video isn't rendered yet");
 
 
-    this.dispatchEvent(new GeneratingEvent("generating", { consuming }));
+    this.dispatchEvent(new Event("generating"));
 
 
     const paint = new Worker(
@@ -696,18 +693,23 @@ export default class VideoCreator extends HTMLElement {
     const offscreen = canvas.transferControlToOffscreen();
 
 
+    paint.postMessage(/** @satisfies {import("./paint").PaintInit} */ ({
+      offscreen,
+      frameRate: this.frameRate,
+    }), [offscreen]);
+
+
     const audioCtx = new AudioContext();
-    const bufferSrc = new AudioBufferSourceNode(audioCtx, {
-      buffer: this.#audio,
-    });
     const dest = audioCtx.createMediaStreamDestination();
-    bufferSrc.connect(dest);
 
 
     const recorder = new MediaRecorder(new MediaStream([
       ...canvas.captureStream().getTracks(),
       ...dest.stream.getTracks(),
     ]), { mimeType: this.type });
+
+    recorder.start();
+    recorder.pause();
 
     /** @type {Blob[]} */
     const chunks = [];
@@ -717,22 +719,32 @@ export default class VideoCreator extends HTMLElement {
     });
 
 
-    recorder.start();
-    paint.postMessage(/** @satisfies {import("./paint").PaintInit} */ ({
-      frames: this.#frames,
-      offscreen,
-      frameRate: this.frameRate,
-    }), [...(consuming ? this.#frames : []), offscreen]);
-    bufferSrc.start();
+    this.#progress.hidden = false;
 
 
-    if (consuming) {
+    const videoChunks = this.chunks;
+    for (let chunk = 0; chunk < videoChunks; chunk++) {
+      await this.render({ chunk });
+
+
+      if (this.#frames === null) throw new Error("Something is very wrong.");
+
+
+      paint.postMessage(/** @satisfies {import("./paint").PaintRequest} */ ({
+        frames: this.#frames,
+      }), this.#frames);
+
+      const bufferSrc = new AudioBufferSourceNode(audioCtx, {
+        buffer: this.#audio,
+      });
+      bufferSrc.connect(dest);
+      bufferSrc.start();
+
+      recorder.resume();
+
+
       this.#progress.max = this.#frames.length / this.frameRate * 1000;
       this.#progress.value = 0;
-
-      this.reset();
-
-      this.#progress.hidden = false;
 
 
       const start = Date.now();
@@ -744,32 +756,38 @@ export default class VideoCreator extends HTMLElement {
           requestAnimationFrame(displayProgress);
       }
       displayProgress();
-    }
 
 
-    await new Promise(resolve => {
-      /** @param {MessageEvent<"done" | "warn">} event */
-      const onMessage = ({ data }) => {
-        switch (data) {
-          case "done":
-            resolve(null);
-            paint.removeEventListener("message", onMessage);
-            break;
-          case "warn":
-            this.dispatchEvent(new Event("slowframerate"));
-            break;
+      this.reset();
+
+
+      await new Promise(resolve => {
+        /** @param {MessageEvent<"done" | "warn">} event */
+        const onMessage = ({ data }) => {
+          switch (data) {
+            case "done":
+              resolve(null);
+              paint.removeEventListener("message", onMessage);
+              break;
+            case "warn":
+              this.dispatchEvent(new Event("slowframerate"));
+              break;
+          }
         }
-      }
 
 
-      paint.addEventListener("message", onMessage);
-    });
+        paint.addEventListener("message", onMessage);
+      });
+
+
+      recorder.pause();
+    }
     recorder.stop();
 
     await getEvent(recorder, "stop");
 
 
-    if (consuming) this.#progress.hidden = true;
+    this.#progress.hidden = true;
 
 
     const video = new Blob(chunks, { type: chunks[0].type });
@@ -942,7 +960,7 @@ export default class VideoCreator extends HTMLElement {
  * @typedef {HTMLElementEventMap & {
  *   rendering: Event;
  *   rendered: RenderedEvent;
- *   generating: GeneratingEvent;
+ *   generating: Event;
  *   generated: GeneratedEvent;
  *   play: Event;
  *   pause: Event;
