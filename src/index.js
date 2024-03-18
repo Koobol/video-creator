@@ -167,10 +167,30 @@ export default class VideoCreator extends HTMLElement {
   /** the status of the video's rendering */
   get state() { return this.#state; }
   /**
-   * render the video with the given worker
+   * @overload
+   * render the video
    * @param {RenderOptions} [options]
+   * @returns {Promise<void>}
+   *
+   * @overload
+   * render the video
+   * @param {Worker} [worker]
+   * @returns {Promise<void>}
+   *
+   * @method
+   * render the video
+   * @param {RenderOptions | Worker} [optionsOrWorker]
+   * @returns {Promise<void>}
    */
-  async render({ worker, chunk = this.chunk } = {}) {
+  async render(optionsOrWorker = {}) {
+    /** @type {Worker=} */
+    let worker;
+    let chunk = this.chunk;
+
+    if (optionsOrWorker instanceof Worker) worker = optionsOrWorker;
+    else ({ worker, chunk = chunk } = optionsOrWorker);
+
+
     if (worker !== undefined) {
       handleVideoRequests(worker);
 
