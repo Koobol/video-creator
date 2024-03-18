@@ -187,6 +187,7 @@ export default class VideoSrc {
       }
       if (chunks.length !== 0)
         chunk = Math.floor(Math.max(0, Math.min(chunk, chunks.length - 1)));
+      if (isNaN(chunk)) chunk = 0;
 
 
 

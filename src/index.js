@@ -23,7 +23,8 @@ export default class VideoCreator extends HTMLElement {
           aria-checked="false"
           disabled
         ></button>
-        <input type="range" disabled value="0" step="1">
+        <input type="range" disabled value="0" step="1" />
+        <input type="number" disabled min="0" />
       </div>
 
       <div id="download-wrapper" hidden>
@@ -43,6 +44,7 @@ export default class VideoCreator extends HTMLElement {
   #playWrapper;
   #play;
   #search;
+  #chunkInput;
 
   #downloadWrapper;
   #download;
@@ -89,7 +91,10 @@ export default class VideoCreator extends HTMLElement {
     this.#play = /** @type {HTMLButtonElement} */
       (shadow.querySelector("#play"));
     this.#search = /** @type {HTMLInputElement} */
-      (shadow.querySelector("input"));
+      (shadow.querySelector("input[type='range']"));
+    this.#chunkInput = /** @type {HTMLInputElement} */
+      (shadow.querySelector("input[type='number']"));
+    this.#chunkInput.valueAsNumber = this.chunk;
 
     this.#downloadWrapper = /** @type {HTMLDivElement} */
       (shadow.querySelector("#download-wrapper"));
@@ -121,6 +126,10 @@ export default class VideoCreator extends HTMLElement {
 
       if (this.#play.ariaChecked === "true") this.play();
       else this.pause();
+    });
+
+    this.#chunkInput.addEventListener("change", () => {
+      if (this.worker) this.render({ chunk: this.#chunkInput.valueAsNumber });
     });
 
     this.#download.addEventListener("click", async () => {
@@ -206,6 +215,9 @@ export default class VideoCreator extends HTMLElement {
 
       chunk = this.#chunk = this.defaultChunk;
     }
+
+
+    this.#chunkInput.valueAsNumber = chunk;
 
 
     this.#currentVideo = {
@@ -397,6 +409,7 @@ export default class VideoCreator extends HTMLElement {
     this.#search.disabled = value;
     this.#play.disabled = value;
     this.#download.disabled = value;
+    this.#chunkInput.disabled = value;
 
     if (value) return;
     this.pause();

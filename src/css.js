@@ -53,7 +53,10 @@ canvas {
     border-inline-end-color: currentcolor;
   }
 }
-input {
+input[type="range"] {
   flex: 1;
+}
+input[type="number"] {
+  inline-size: 3.5em;
 }
 `;
