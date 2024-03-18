@@ -194,12 +194,17 @@ export default class VideoCreator extends HTMLElement {
     if (worker !== undefined) {
       handleVideoRequests(worker);
 
+      chunk = this.#chunk = this.defaultChunk;
+
+
       this.src = null;
     } else if (this.#worker === null && this.src !== null) {
       worker = new Worker(new URL(this.src, location.href), {
         type: "module",
       });
       handleVideoRequests(worker);
+
+      chunk = this.#chunk = this.defaultChunk;
     }
 
 
