@@ -18,6 +18,9 @@ const rotatingCircle = Example.defineChunk(async example => {
   const { ctx, width, height, frameRate } = example;
 
 
+  ctx.clearRect(0, 0, width, height);
+
+
   let t = 0;
   let nextCycle = 0;
 
@@ -65,6 +68,9 @@ const rotatingCircle = Example.defineChunk(async example => {
 
 const movingSquare = Example.defineChunk(example => {
   const { ctx, width, height, frameRate } = example;
+
+
+  ctx.clearRect(0, 0, width, height);
 
 
   let x = 0;

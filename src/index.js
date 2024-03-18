@@ -162,7 +162,13 @@ export default class VideoCreator extends HTMLElement {
   get worker() { return this.#worker; }
   
   #chunk = this.defaultChunk;
+  /** the index of the current chunk */
   get chunk() { return this.#chunk; }
+
+  /** @type {number?} */
+  #chunks = null;
+  /** how many chunks there are in the current video */
+  get chunks() { return this.#chunks; }
 
   /**
    * @type {(
@@ -209,6 +215,7 @@ export default class VideoCreator extends HTMLElement {
       handleVideoRequests(worker);
 
       chunk = this.#chunk = this.defaultChunk;
+      this.#chunks = null;
 
 
       this.src = null;
@@ -219,6 +226,7 @@ export default class VideoCreator extends HTMLElement {
       handleVideoRequests(worker);
 
       chunk = this.#chunk = this.defaultChunk;
+      this.#chunks = null;
     }
 
 
@@ -289,7 +297,10 @@ export default class VideoCreator extends HTMLElement {
     );
     if (signal === "abort") return null;
 
-    const { frames, audioInstructions, maxPixelsExceeded } = signal;
+    const { frames, audioInstructions, maxPixelsExceeded, chunks = 1 } = signal;
+    
+
+    this.#chunks = chunks;
 
 
     this.#frames = frames;
@@ -360,6 +371,8 @@ export default class VideoCreator extends HTMLElement {
 
     this.#search.max = `${frames.length - 1}`;
 
+    this.#chunkInput.max = `${chunks - 1}`;
+
 
     this.#search.dispatchEvent(new Event("input"));
 
@@ -384,6 +397,9 @@ export default class VideoCreator extends HTMLElement {
     this.#disabled = true;
 
 
+    this.#search.valueAsNumber = 0;
+
+
     if (this.#state === "rendering") {
       this.#worker?.postMessage(/** @type {import("./render").AbortSignal} */ ({
         type: "abort",
@@ -394,6 +410,9 @@ export default class VideoCreator extends HTMLElement {
       this.#worker = null;
       this.#chunk = this.defaultChunk;
     }
+
+
+    this.#chunks = null;
 
 
     this.#currentVideo = null;

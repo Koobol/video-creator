@@ -300,6 +300,7 @@ export default class VideoSrc {
         frames,
         audioInstructions,
         maxPixelsExceeded,
+        chunks: chunks.length || 1,
       }), { transfer: frames });
 
 
@@ -334,6 +335,7 @@ export { default as Sound } from "./sound.js";
  *   - keys are audio file being used, values are the sounds being played
  * @prop {boolean} [maxPixelsExceeded]
  *   - whether or not the max pixel limit was exceeded
+ * @prop {number} [chunks] - how many chunks there are
  * 
  * 
  * @typedef AbortSignal
