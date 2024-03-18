@@ -47,7 +47,10 @@ export default function handleVideoRequests(worker) {
       /** @satisfies {import("./render").VideoResponse} */ ({
         type: "video response",
         src,
+        frameRate,
         frames,
+        start: data.start,
+        end: data.end,
       }),
       frames,
     );

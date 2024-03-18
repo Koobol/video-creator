@@ -1,6 +1,6 @@
 import VideoSrc from "../../src/render";
 
-// import videoUrl from "./video.webm?url";
+import videoUrl from "./video.webm?url";
 // import puppy from "./puppy.jpg?url";
 import beep from "./beep.wav?url";
 
@@ -19,8 +19,8 @@ const rotatingCircle = Example.defineChunk(async example => {
   let nextCycle = 0;
 
 
-  // const video = await example.getVideo(videoUrl, { start: 1.9, end: 3.9 });
-  // video.play();
+  const video = await example.getVideo(videoUrl, { start: 1.9, end: 3.9 });
+  video.play();
 
 
   example.playSound(beep, { delay: 0.5, loop: true, loopEnd: 0.5 });
@@ -58,13 +58,13 @@ const rotatingCircle = Example.defineChunk(async example => {
     ctx.restore();
 
 
-    // ctx.drawImage(
-    //   video.currentFrame,
-    //   0,
-    //   0,
-    //   video.width / 4,
-    //   video.height / 4,
-    // );
+    ctx.drawImage(
+      video.currentFrame,
+      0,
+      0,
+      video.width / 4,
+      video.height / 4,
+    );
     // video.volume -= 0.02;
 
 

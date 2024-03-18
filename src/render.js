@@ -70,16 +70,34 @@ export default class VideoSrc {
    * @param {VideoOptions} [options]
    */
   async getVideo(src, { start, end, volume } = {}) {
+    const frameRate = this.frameRate;
+
     postMessage(/** @satisfies {VideoRequest} */ ({
       type: "video request",
       src: new URL(src, location.href).href,
-      frameRate: this.frameRate,
+      frameRate,
       start,
       end,
     }));
 
 
-    const { frames } = await getMessage("video response");
+    /** @type {VideoResponse} */
+    const { frames } = await new Promise(resolve => {
+      /** @param {MessageEvent<ToRender>} event */
+      const onMessage = ({ data }) => {
+        if (
+          data.type === "video response" &&
+          data.src === new URL(src, location.href).href &&
+          data.frameRate === frameRate &&
+          data.start === start &&
+          data.end === end
+        ) {
+          resolve(data);
+          self.removeEventListener("message", onMessage);
+        }
+      }
+      self.addEventListener("message", onMessage);
+    });
 
 
     return new Video(frames, src, this, { offset: start, volume });
@@ -133,6 +151,7 @@ export default class VideoSrc {
 
 
     let aborting = false;
+    // TODO fix problem with premature aborting
     /** @param {MessageEvent<ToRender>} event */
     const abortListener = ({ data }) => {
       if (data.type !== "abort") return;
@@ -332,6 +351,9 @@ export { default as Sound } from "./sound.js";
  * @typedef VideoResponse
  * @prop {"video response"} type
  * @prop {string} src
+ * @prop {number} frameRate
+ * @prop {number} [start]
+ * @prop {number} [end]
  * @prop {ImageBitmap[]} frames
  * 
  * 
