@@ -16,9 +16,6 @@ export default class VideoSrc {
 
     /** the framerate of the video */
     this.#frameRate = frameRate;
-
-
-    sounds.set(this, new Set());
   }
 
   #frameRate;
@@ -159,6 +156,8 @@ export default class VideoSrc {
 
     while (true) {
       videoSrc.#frame = 0;
+
+      sounds.set(videoSrc, new Set());
 
 
       if (chunk === null) {
