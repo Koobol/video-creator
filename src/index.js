@@ -61,7 +61,7 @@ export default class VideoCreator extends HTMLElement {
   /** @type {GainNode?} */
   #volumeNode = null;
   /** @type {AudioBufferSourceNode?} */
-  #playing = null;
+  #playingNode = null;
 
 
   /** @type {ImageBitmap[]?} */
@@ -115,9 +115,7 @@ export default class VideoCreator extends HTMLElement {
     });
 
     this.#search.addEventListener("input", () => {
-      this.#frame = this.frame;
-
-      this.pause();
+      this.frame = this.#search.valueAsNumber;
     });
 
     this.#play.addEventListener("click", () => {
@@ -129,6 +127,7 @@ export default class VideoCreator extends HTMLElement {
 
     this.#chunkInput.addEventListener("change", () => {
       if (this.worker) this.render({ chunk: this.#chunkInput.valueAsNumber });
+      this.pause();
     });
 
     this.#download.addEventListener("click", async () => {
@@ -392,12 +391,15 @@ export default class VideoCreator extends HTMLElement {
     this.#chunkInput.max = `${chunks - 1}`;
 
 
-    this.#search.dispatchEvent(new Event("input"));
+    this.#frame = 0;
 
 
     this.#state = "rendered";
 
     this.dispatchEvent(new RenderedEvent("rendered", { maxPixelsExceeded }));
+
+
+    if (this.playing) this.play();
 
 
     return maxPixelsExceeded ?? false;
@@ -415,8 +417,7 @@ export default class VideoCreator extends HTMLElement {
     this.#disabled = true;
 
 
-    this.#search.valueAsNumber = 0;
-    this.pause();
+    this.#frame = 0;
 
 
     if (this.#state === "rendering") {
@@ -458,8 +459,7 @@ export default class VideoCreator extends HTMLElement {
     this.#download.disabled = value;
     this.#chunkInput.disabled = value;
 
-    if (value) return;
-    this.pause();
+    if (value) this.#stopAudio();
   }
 
 
@@ -533,14 +533,17 @@ export default class VideoCreator extends HTMLElement {
   #playTimeout;
   /** start playing the preview */
   play() {
-    if (this.playing || this.#frames === null || this.#audio === null) return;
+    if (!this.playing) this.dispatchEvent(new Event("play"));
+
+
+    this.#playing = true;
+
+    
+    if (this.#audio === null || this.#frames === null) return;
 
 
     this.#audioCtx ??= new AudioContext();
     this.#audioStream ??= this.#audioCtx.createMediaStreamDestination();
-
-
-    this.dispatchEvent(new Event("play"));
 
 
     this.#play.ariaChecked = "true";
@@ -557,7 +560,7 @@ export default class VideoCreator extends HTMLElement {
     let lastFrame = Date.now();
 
     const nextFrame = () => {
-      if (this.#frames === null) return;
+      if (this.#frames === null || this.chunks === null) return;
 
 
       const actualTime = Date.now() - lastFrame;
@@ -578,7 +581,9 @@ export default class VideoCreator extends HTMLElement {
       this.#playTimeout = setTimeout(nextFrame, targetTime);
 
 
-      if (this.frame >= this.#frames.length - 1) this.pause();
+      if (this.frame < this.#frames.length - 1) return;
+      if (this.chunk < this.chunks - 1) this.render({ chunk: this.chunk + 1 });
+      else this.pause();
     };
 
     this.#playTimeout = setTimeout(nextFrame, targetTime);
@@ -587,37 +592,43 @@ export default class VideoCreator extends HTMLElement {
     if (this.#audioCtx.state === "suspended")
       this.#audioCtx.resume();
 
-    this.#playing = new AudioBufferSourceNode(this.#audioCtx, {
+    this.#playingNode = new AudioBufferSourceNode(this.#audioCtx, {
       buffer: this.#audio,
     });
 
     this.#volumeNode ??= new GainNode(this.#audioCtx, { gain: this.volume });
-    this.#playing.connect(this.#volumeNode);
+    this.#playingNode.connect(this.#volumeNode);
 
     this.#volumeNode.connect(this.#audioCtx.destination);
     this.#volumeNode.connect(this.#audioStream);
-    this.#playing.start(0, this.frame / this.frameRate);
+    this.#playingNode.start(0, this.frame / this.frameRate);
   }
 
   /** pause the preview */
   pause() {
     if (!this.playing) return;
+    this.#playing = false;
 
 
     this.dispatchEvent(new Event("pause"));
 
 
-    clearTimeout(this.#playTimeout);
-    this.#playTimeout = undefined;
-
     this.#play.ariaChecked = "false";
 
 
+    this.#stopAudio();
+  }
+  #stopAudio() {
+    clearTimeout(this.#playTimeout);
+    this.#playTimeout = undefined;
+
+
     this.#audioCtx?.suspend();
-    this.#playing?.stop();
+    this.#playingNode?.stop();
   }
 
-  get playing() { return this.#playTimeout !== undefined; }
+  #playing = false;
+  get playing() { return this.#playing; }
 
 
   get frame() { return this.#search.valueAsNumber; }
