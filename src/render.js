@@ -139,13 +139,11 @@ export default class VideoSrc {
    * @param {VideoChunk<InstanceType<T>>[]} [chunks] - the chunks of video
    */
   static async render(chunks = []) {
-    while (true) await this.#render(chunks);
+    while (true) await VideoSrc.#render.call(this, chunks);
   }
   /**
-   * use to define a VideoSrc as the one to render the video
    * @template {typeof VideoSrc} T
-   * @this {T}
-   * @param {VideoChunk<InstanceType<T>>[]} [chunks] - the chunks of video
+   * @param {VideoChunk<InstanceType<T>>[]} chunks
    */
   static async #render(chunks) {
     const init = VideoSrc.#init ?? await getMessage("render init");
