@@ -538,19 +538,24 @@ export default class VideoCreator extends HTMLElement {
 
     this.#playing = true;
 
+
+    this.#play.ariaChecked = "true";
+
     
-    if (this.#audio === null || this.#frames === null) return;
+    if (this.#audio === null || this.#frames === null || this.chunks === null)
+      return;
+
+
+    if (this.frame >= this.#frames.length - 1) {
+      if (this.chunk < this.chunks - 1) this.render({ chunk: this.chunk + 1 });
+      else this.render({ chunk: 0 });
+
+      return;
+    }
 
 
     this.#audioCtx ??= new AudioContext();
     this.#audioStream ??= this.#audioCtx.createMediaStreamDestination();
-
-
-    this.#play.ariaChecked = "true";
-
-
-    if (this.frame >= this.#frames.length - 1)
-      this.#frame = 0;
 
 
     const targetTime = 1000 / this.frameRate;
