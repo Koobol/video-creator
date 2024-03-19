@@ -395,9 +395,6 @@ export default class VideoCreator extends HTMLElement {
     this.#search.dispatchEvent(new Event("input"));
 
 
-    if (this.autoplay) this.play();
-
-
     this.#state = "rendered";
 
     this.dispatchEvent(new RenderedEvent("rendered", { maxPixelsExceeded }));
@@ -622,14 +619,6 @@ export default class VideoCreator extends HTMLElement {
 
   get playing() { return this.#playTimeout !== undefined; }
 
-
-  get autoplay() { return this.hasAttribute("autoplay"); }
-  set autoplay(autoplay) {
-    if (autoplay === this.autoplay) return;
-
-    if (autoplay) this.setAttribute("autoplay", "");
-    else this.removeAttribute("autoplay");
-  }
 
   get frame() { return this.#search.valueAsNumber; }
   /**
