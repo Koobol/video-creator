@@ -137,7 +137,8 @@ export default class VideoSrc {
    * @template {typeof VideoSrc} T
    * @this {T}
    * @param {VideoChunk<InstanceType<T>>[]} [chunks] - the chunks of video
-   * @param {boolean} [oneTime] - whether or not to only render one video
+   * @param {boolean} [oneTime] - whether or not to only render one video,
+   *   should only be used if you really know what you're doing
    */
   static async render(chunks = [], oneTime = false) {
     if (!oneTime) {
@@ -153,7 +154,7 @@ export default class VideoSrc {
     let aborting = false;
     /** @param {MessageEvent<ToRender>} event */
     const abortListener = ({ data }) => {
-      if (data.type !== "abort") return;
+      if (data.type !== "abort" || chunk === null) return;
 
       aborting = true;
 
@@ -172,7 +173,7 @@ export default class VideoSrc {
     let chunk = init.chunk ?? 0;
 
 
-    while (true) {
+    chunk: while (true) {
       videoSrc.#frame = 0;
 
       sounds.set(videoSrc, new Set());
@@ -246,7 +247,12 @@ export default class VideoSrc {
             self.postMessage(/** @type {AbortSignal} */ ({
               type: "abort",
             }));
-            return;
+
+
+            chunk = null;
+
+
+            continue chunk;
           }
 
 

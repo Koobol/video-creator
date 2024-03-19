@@ -374,6 +374,16 @@ export default class VideoCreator extends HTMLElement {
     this.#audio = await audioCtx.startRendering();
 
 
+    if (this.#resetting > 0) {
+      this.#resetting--;
+      
+      this.#audio = null;
+
+
+      return null;
+    }
+
+
     this.#disabled = false;
 
 
