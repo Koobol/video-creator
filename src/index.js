@@ -750,6 +750,7 @@ export default class VideoCreator extends HTMLElement {
 
         if (this.#progress.value < this.#progress.max)
           requestAnimationFrame(displayProgress);
+        else this.#progress.removeAttribute("value");
       }
       displayProgress();
 
