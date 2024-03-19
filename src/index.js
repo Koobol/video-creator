@@ -180,6 +180,9 @@ export default class VideoCreator extends HTMLElement {
   #state = "waiting";
   /** the status of the video's rendering */
   get state() { return this.#state; }
+  #generating = false;
+  get generating() { return this.#generating; }
+
   /**
    * @overload
    * render the video,
@@ -209,6 +212,12 @@ export default class VideoCreator extends HTMLElement {
 
     if (optionsOrWorker instanceof Worker) worker = optionsOrWorker;
     else ({ worker, chunk = chunk } = optionsOrWorker);
+
+
+    if (this.generating) {
+      if (this.#readyToRender) this.#readyToRender = false;
+      else return null;
+    }
 
 
     if (worker !== undefined) {
@@ -394,6 +403,9 @@ export default class VideoCreator extends HTMLElement {
    * @param {boolean} [complete] - if set to true will erase worker
    */
   reset(complete = false) {
+    if (this.generating && this.state !== "rendered") return;
+
+
     this.#disabled = true;
 
 
@@ -669,9 +681,15 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
+  /** whether or not the generating code is ready to render */
+  #readyToRender = false;
   /** generate a video file from the current src */
   async generateVideo() {
     if (this.chunks === null) throw new Error("Video isn't rendered yet");
+
+
+    if (this.generating) throw new Error("VideoCreator is already generating.");
+    this.#generating = true;
 
 
     this.dispatchEvent(new Event("generating"));
@@ -720,6 +738,7 @@ export default class VideoCreator extends HTMLElement {
 
     const videoChunks = this.chunks;
     for (let chunk = 0; chunk < videoChunks; chunk++) {
+      this.#readyToRender = true;
       await this.render({ chunk });
 
 
@@ -785,6 +804,9 @@ export default class VideoCreator extends HTMLElement {
 
 
     this.#progress.hidden = true;
+
+
+    this.#generating = false;
 
 
     const video = new Blob(chunks, { type: chunks[0].type });
