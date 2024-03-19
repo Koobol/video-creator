@@ -14,52 +14,54 @@
 import { sleep, getEvent } from "./funcs.js";
 
 
-const { data: { frameRate, offscreen } } =
-  /** @type {MessageEvent<PaintInit>} */ (await getEvent(self, "message"));
-let warned = false;
+(async () => {
+  const { data: { frameRate, offscreen } } =
+    /** @type {MessageEvent<PaintInit>} */ (await getEvent(self, "message"));
+  let warned = false;
 
-self.addEventListener(
-  "message",
-  /**
-   * @param {MessageEvent<PaintRequest>} event
-   */
-  async ({ data: { frames }}) => {
-    const interval = 1 / frameRate * 1000;
-
-
-    const start = Date.now();
+  self.addEventListener(
+    "message",
+    /**
+     * @param {MessageEvent<PaintRequest>} event
+     */
+    async ({ data: { frames }}) => {
+      const interval = 1 / frameRate * 1000;
 
 
-    let last = start - interval;
-    let frame = 0;
+      const start = Date.now();
 
 
-    const ctx = /** @type {ImageBitmapRenderingContext} */
-      (offscreen.getContext("bitmaprenderer"));
+      let last = start - interval;
+      let frame = 0;
 
 
-    while (true) {
-      if (Date.now() - last < interval) continue;
-      last = start + frame * interval;
+      const ctx = /** @type {ImageBitmapRenderingContext} */
+        (offscreen.getContext("bitmaprenderer"));
 
 
-      ctx.transferFromImageBitmap(frames[frame++]);
-      await sleep();
+      while (true) {
+        if (Date.now() - last < interval) continue;
+        last = start + frame * interval;
 
 
-      if (!warned && Date.now() - last > interval) {
-        console.warn("Video file rendering not able to " +
-                     "keep up with requested framerate.");
-        postMessage("warn");
-
-        warned = true;
-      }
+        ctx.transferFromImageBitmap(frames[frame++]);
+        await sleep();
 
 
-      if (frame >= frames.length - 1) {
-        postMessage("done");
-        break;
+        if (!warned && Date.now() - last > interval) {
+          console.warn("Video file rendering not able to " +
+            "keep up with requested framerate.");
+          postMessage("warn");
+
+          warned = true;
+        }
+
+
+        if (frame >= frames.length - 1) {
+          postMessage("done");
+          break;
+        }
       }
     }
-  }
-);
+  );
+})();
