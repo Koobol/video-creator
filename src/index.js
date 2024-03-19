@@ -398,6 +398,7 @@ export default class VideoCreator extends HTMLElement {
 
 
     this.#search.valueAsNumber = 0;
+    this.pause();
 
 
     if (this.#state === "rendering") {
@@ -515,11 +516,9 @@ export default class VideoCreator extends HTMLElement {
 
   /** @type {ReturnType<typeof setTimeout>=} */
   #playTimeout;
-  /**
-   * start playing the preview
-   */
+  /** start playing the preview */
   play() {
-    if (this.#frames === null || this.#audio === null) return;
+    if (this.playing || this.#frames === null || this.#audio === null) return;
 
 
     this.#audioCtx ??= new AudioContext();
@@ -527,9 +526,6 @@ export default class VideoCreator extends HTMLElement {
 
 
     this.dispatchEvent(new Event("play"));
-
-
-    if (this.#playTimeout !== undefined) return;
 
 
     this.#play.ariaChecked = "true";
