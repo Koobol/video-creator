@@ -550,7 +550,7 @@ export default class VideoCreator extends HTMLElement {
 
 
     if (this.frame >= this.#frames.length - 1)
-      this.frame = 0;
+      this.#frame = 0;
 
 
     const targetTime = 1000 / this.frameRate;
@@ -572,7 +572,7 @@ export default class VideoCreator extends HTMLElement {
 
 
       requestedTime = targetTime * Math.ceil(offset / targetTime) - offset;
-      this.frame = Math.min(
+      this.#frame = Math.min(
         this.frame + Math.ceil(offset / targetTime),
         this.#frames.length - 1,
       );
@@ -652,16 +652,20 @@ export default class VideoCreator extends HTMLElement {
     );
 
 
+    this.#search.valueAsNumber = frame;
+
+
     this.dispatchEvent(new Event("timeupdate"));
   }
   set frame(frame) {
     if (this.#frames === null) return;
 
 
-    if (frame >= this.#frames?.length || frame < 0)
-      throw new RangeError(`frame ${frame} does not exist`);
+    frame = Math.floor(Math.max(0, Math.min(frame, this.#frames.length - 1)));
+    if (!(frame in this.#frames)) frame = 0;
 
-    this.#search.valueAsNumber = frame;
+
+    this.pause();
 
 
     this.#frame = frame;
