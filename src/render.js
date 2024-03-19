@@ -137,15 +137,17 @@ export default class VideoSrc {
    * @template {typeof VideoSrc} T
    * @this {T}
    * @param {VideoChunk<InstanceType<T>>[]} [chunks] - the chunks of video
-   * @param {boolean} [oneTime] - whether or not to only render one video,
-   *   should only be used if you really know what you're doing
    */
-  static async render(chunks = [], oneTime = false) {
-    if (!oneTime) {
-      while (true) await this.render(chunks, true);
-    }
-
-
+  static async render(chunks = []) {
+    while (true) await this.#render(chunks);
+  }
+  /**
+   * use to define a VideoSrc as the one to render the video
+   * @template {typeof VideoSrc} T
+   * @this {T}
+   * @param {VideoChunk<InstanceType<T>>[]} [chunks] - the chunks of video
+   */
+  static async #render(chunks) {
     const init = VideoSrc.#init ?? await getMessage("render init");
     VideoSrc.#init = null;
     const { width, height, frameRate } = init;
