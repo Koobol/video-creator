@@ -214,10 +214,9 @@ export default class VideoCreator extends HTMLElement {
     else ({ worker, chunk = chunk } = optionsOrWorker);
 
 
-    if (this.generating) {
-      if (this.#readyToRender) this.#readyToRender = false;
-      else return null;
-    }
+    if (this.generating && !this.#readyToRender) return null;
+    this.#readyToRender = false;
+
 
 
     if (worker !== undefined) {
