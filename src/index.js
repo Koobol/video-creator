@@ -417,7 +417,11 @@ export default class VideoCreator extends HTMLElement {
     this.#disabled = true;
 
 
-    this.#frame = 0;
+    this.#frames = null;
+    this.#audio = null;
+
+
+    this.#search.valueAsNumber = 0;
 
 
     if (this.#state === "rendering") {
@@ -439,10 +443,6 @@ export default class VideoCreator extends HTMLElement {
 
 
     this.#ctx.clearRect(0, 0, this.#preview.width, this.#preview.height);
-
-
-    this.#frames = null;
-    this.#audio = null;
 
 
     this.#state = "waiting";

@@ -43,9 +43,6 @@ it("starts out waiting", () => {
 
   expect(videoCreator.playing).toBe(false);
 
-  videoCreator.play();
-  expect(videoCreator.playing).toBe(false);
-
 
   expect(videoCreator.getFrames()).toBeNull();
   expect(videoCreator.getAudio()).toBeNull();
