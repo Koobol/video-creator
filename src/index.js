@@ -633,7 +633,7 @@ export default class VideoCreator extends HTMLElement {
 
   get frame() { return this.#search.valueAsNumber; }
   /**
-   * update preview without updating search bar
+   * update preview without pausing
    * @param {number} frame
    */
   set #frame(frame) {
@@ -671,7 +671,9 @@ export default class VideoCreator extends HTMLElement {
     this.#frame = frame;
   }
 
-  /** the time that the video is currently at, in seconds */
+  /**
+   * the time that the video is currently at in the current chunk, in seconds
+   */
   get currentTime() { return this.frame / this.frameRate; }
   set currentTime(time) {
     if (this.length === null) return;
@@ -683,6 +685,7 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
+  /** the length of the current chunk, in seconds */
   get length() {
     if (this.#frames === null) return null;
 
