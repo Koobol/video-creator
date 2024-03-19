@@ -161,7 +161,7 @@ export default class VideoCreator extends HTMLElement {
   #worker = null;
   get worker() { return this.#worker; }
   
-  #chunk = this.defaultChunk;
+  #chunk = 0;
   /** the index of the current chunk */
   get chunk() { return this.#chunk; }
 
@@ -222,7 +222,7 @@ export default class VideoCreator extends HTMLElement {
     if (worker !== undefined) {
       handleVideoRequests(worker);
 
-      chunk = this.#chunk = this.defaultChunk;
+      this.#chunk = chunk;
       this.#chunks = null;
 
 
@@ -233,7 +233,7 @@ export default class VideoCreator extends HTMLElement {
       });
       handleVideoRequests(worker);
 
-      chunk = this.#chunk = this.defaultChunk;
+      this.#chunk = chunk;
       this.#chunks = null;
     }
 
@@ -420,7 +420,7 @@ export default class VideoCreator extends HTMLElement {
     }
     if (complete) {
       this.#worker = null;
-      this.#chunk = this.defaultChunk;
+      this.#chunk = 0;
     }
 
 
@@ -490,9 +490,6 @@ export default class VideoCreator extends HTMLElement {
     return !isNaN(framerateAttr) && framerateAttr > 0 ? framerateAttr : 30;
   }
   set frameRate(value) { this.setAttribute("framerate", `${value}`); }
-
-  get defaultChunk() { return Number(this.getAttribute("chunk")); }
-  set defaultChunk(chunk) { this.setAttribute("chunk", chunk.toString()); }
 
   get controls() {
     const controls = this.getAttribute("controls") ?? "none";
@@ -737,8 +734,10 @@ export default class VideoCreator extends HTMLElement {
 
     const videoChunks = this.chunks;
     for (let chunk = 0; chunk < videoChunks; chunk++) {
-      this.#readyToRender = true;
-      await this.render({ chunk });
+      if (this.chunk !== chunk) {
+        this.#readyToRender = true;
+        await this.render({ chunk });
+      }
 
 
       if (this.#frames === null) throw new Error("Something is very wrong.");
