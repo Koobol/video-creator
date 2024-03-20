@@ -11,7 +11,7 @@ To actually view your video, import `video-creator` and define its default expor
 
 See [the wiki](https://github.com/Koobol/video-creator/wiki) for a full reference of the API.
 
-[See an example of the video creator in action!](https://koobol.github.io/video-creator/).
+[See an example of the video creator in action!](https://koobol.github.io/video-creator/)
 
 ### Example
 example.js
