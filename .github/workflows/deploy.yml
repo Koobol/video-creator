@@ -17,7 +17,6 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
     uses: koobol/video-creator/.github/workflows/test.yml@main
 
   github_pages:
