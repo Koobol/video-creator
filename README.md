@@ -77,7 +77,7 @@ index.html
 
 
 ### Notes
-* If you set the frame rate too high, some browsers may not be able to render the video properly. When this happens, you will get a warning in the console tell and fire the `slowframerate` event to tell you as such. In my testing, 60 fps is just a little too high for Firefox, but is fine on Chrome and Edge, so if you want it to be consistent across all browsers 30 fps will be better.
+* If you set the frame rate too high, some browsers may not be able to render the video properly. When this happens, you will get a warning in the console and a firing of the `slowframerate` event to tell you as such. In my testing, 60 fps is just a little too high for Firefox, but is fine on Chrome and Edge, so if you want it to be consistent across all browsers 30 fps will be better.
 * It can be good for performance to set `alpha: false` on your `ctx`, since the alpha channel of canvas pixels won't affect anything in the end anyway.
 * At the moment the `getVideo()` method is very slow, so I would recommend not trying to use clips that are very long yet, or waiting until you're done to add them in, and just putting placeholders in during development. I would also recommend caching the retrieved video inside your `VideoSrc`, so subsequent rendering doesn't take as long.
 * As the code base is pretty large at this point and I'm only one person, there's bound to be quite a few bugs. If you encounter any bugs, please create an issue on GitHub and I will try to fix it as soon as possible.
