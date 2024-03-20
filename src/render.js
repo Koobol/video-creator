@@ -109,6 +109,8 @@ export default class VideoSrc {
    * @template {typeof VideoSrc} T
    * @this {T}
    * @param {VideoChunk<InstanceType<T>>} chunk
+   *   - a setup function which returns a draw function,
+   *     the draw function should return true to finish rendering
    */
   static defineChunk(chunk) { return chunk; }
 

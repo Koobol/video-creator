@@ -73,7 +73,7 @@ export default class Sound {
   get duration() { return this.#duration; }
 
   #src;
-  /** the source of the video */
+  /** the source of the sound */
   get src() { return this.#src; }
 
   #startingVolume;
