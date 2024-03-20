@@ -422,6 +422,7 @@ export default class VideoCreator extends HTMLElement {
 
 
     this.#search.valueAsNumber = 0;
+    this.dispatchEvent(new Event("timeupdate"));
 
 
     if (this.#state === "rendering") {
