@@ -1,8 +1,9 @@
-name: Deploy to GitHub Pages
+name: Deploy
 
 on:
   push:
-    branches: ["releases"]
+    branches: [main]
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
   workflow_dispatch:
 
 permissions:
@@ -18,15 +19,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: 
-          node-version: 20
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+      - uses: koobol/video-creator/.github/workflows/test.yml@main
 
-  deploy:
+  github_pages:
     needs: test
     environment:
       name: github-pages
