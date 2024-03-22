@@ -148,6 +148,17 @@ export default class VideoSrc {
    */
   afterSetup() {}
 
+  /**
+   * will be called before each frame is drawn on every chunk
+   * @returns {void | Promise<void>}
+   */
+  beforeDraw() {}
+  /**
+   * will be called after each frame is drawn on every chunk
+   * @returns {void | Promise<void>}
+   */
+  afterDraw() {}
+
 
   /** @type {RenderInit?} */
   static #init = null;
@@ -298,7 +309,12 @@ export default class VideoSrc {
         }
 
 
-        if (await draw()) break;
+        await videoSrc.beforeDraw();
+        const breaking = await draw()
+        await videoSrc.afterDraw();
+
+        if (breaking) break;
+
 
         frames.push(canvas.transferToImageBitmap());
 
