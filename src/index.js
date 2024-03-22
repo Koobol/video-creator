@@ -155,6 +155,11 @@ export default class VideoCreator extends HTMLElement {
    * }?}
    */
   #currentVideo = null;
+  #currentVideoMatches() {
+    return this.#currentVideo?.width === this.width &&
+      this.#currentVideo?.height === this.height &&
+      this.#currentVideo?.frameRate === this.frameRate;
+  }
 
   /** @type {Worker?} */
   #worker = null;
@@ -240,11 +245,7 @@ export default class VideoCreator extends HTMLElement {
     this.#chunkInput.valueAsNumber = chunk;
 
 
-    this.#currentVideo = {
-      width: this.width,
-      height: this.height,
-      frameRate: this.frameRate,
-    };
+    const currentVideoMatches = this.#currentVideoMatches();
 
 
     if (this.state !== "waiting") this.reset();
@@ -253,7 +254,11 @@ export default class VideoCreator extends HTMLElement {
     this.dispatchEvent(new Event("rendering"));
 
 
-    if (worker !== undefined)
+    if (
+      worker !== undefined ||
+      (this.#worker !== null && !currentVideoMatches)
+    ) {
+      worker ??= /** @type {Worker} */ (this.#worker);
       worker.postMessage(/** @satisfies {import("./render").RenderInit} */ ({
         type: "render init",
         width: this.width,
@@ -262,6 +267,7 @@ export default class VideoCreator extends HTMLElement {
         chunk,
         data: this.data,
       }));
+    }
     else {
       if (this.#worker === null) throw new Error("No source file given");
       worker = this.#worker;
@@ -273,6 +279,14 @@ export default class VideoCreator extends HTMLElement {
       }));
     }
     this.#worker = worker;
+
+
+    this.#currentVideo = {
+      width: this.width,
+      height: this.height,
+      frameRate: this.frameRate,
+    };
+
 
 
     this.#chunk = chunk;
@@ -994,12 +1008,7 @@ export default class VideoCreator extends HTMLElement {
     }
 
 
-    if (
-      this.#currentVideo?.width === this.width
-      && this.#currentVideo?.height === this.height
-      && this.#currentVideo?.frameRate === this.frameRate
-      || this.state === "waiting"
-    ) return;
+    if (this.#currentVideoMatches() || this.state === "waiting") return;
     this.render();
   }
 }

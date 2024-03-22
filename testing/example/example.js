@@ -14,7 +14,7 @@ class Example extends VideoSrc {
 
 
   beforeAnything() {
-    // console.log("this is before anything!");
+    console.log("this is before anything!");
   }
 }
 
@@ -148,7 +148,7 @@ const video = Example.defineChunk(async example => {
     ctx.strokeStyle = "white";
     ctx.beginPath();
     ctx.moveTo(width - 10 - ctx.measureText(text).width / 2, height - 40);
-    ctx.lineTo(width / 2 + 5, height / 2 + 5);
+    ctx.lineTo(video.width / 2 + 5, video.height / 2 + 5);
     ctx.stroke();
 
     ctx.restore();
