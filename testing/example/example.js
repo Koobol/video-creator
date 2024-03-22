@@ -66,7 +66,7 @@ const rotatingCircle = Example.defineChunk(async example => {
   };
 });
 
-const movingSquare = Example.defineChunk(example => {
+const movingSquare = Example.defineChunk((example, text) => {
   const { ctx, width, height, frameRate } = example;
 
 
@@ -82,8 +82,20 @@ const movingSquare = Example.defineChunk(example => {
 
     ctx.save();
 
+
     ctx.fillStyle = "white";
     ctx.fillRect(x, height / 2 - 50, 100, 100);
+
+
+    if (typeof text === "string") {
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "20px Arial";
+
+      ctx.fillText(text, x + 50, height / 2);
+    }
+
 
     ctx.restore();
 

@@ -260,6 +260,7 @@ export default class VideoCreator extends HTMLElement {
         height: this.height,
         frameRate: this.frameRate,
         chunk,
+        data: this.data,
       }));
     else {
       if (this.#worker === null) throw new Error("No source file given");
@@ -268,6 +269,7 @@ export default class VideoCreator extends HTMLElement {
       worker.postMessage(/** @satisfies {import("./render").ChunkRequest} */ ({
         type: "chunk",
         chunk,
+        data: this.data,
       }));
     }
     this.#worker = worker;
@@ -528,6 +530,13 @@ export default class VideoCreator extends HTMLElement {
 
     if (this.#volumeNode) this.#volumeNode.gain.value = volume;
   }
+
+
+  /**
+   * data that will be sent to the rendering thread on render
+   * @type {*}
+   */
+  data;
 
 
   /** @type {ReturnType<typeof setTimeout>=} */

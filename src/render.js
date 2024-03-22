@@ -151,6 +151,7 @@ export default class VideoSrc {
     const init = VideoSrc.#init ?? await getMessage("render init");
     VideoSrc.#init = null;
     const { width, height, frameRate } = init;
+    let { data } = init;
 
 
     let aborting = false;
@@ -203,7 +204,7 @@ export default class VideoSrc {
           return;
         }
 
-        chunk = message.chunk;
+        ({ chunk, data } = message);
       }
       if (chunks.length !== 0)
         chunk = Math.floor(Math.max(0, Math.min(chunk, chunks.length - 1)));
@@ -220,7 +221,7 @@ export default class VideoSrc {
 
       /** @type {Draw} */
       const draw = chunks.length > 0 ?
-        await chunks[chunk](videoSrc) :
+        await chunks[chunk](videoSrc, data) :
         videoSrc.draw.bind(videoSrc);
       if (chunks.length === 0) await videoSrc.setup();
 
@@ -331,10 +332,12 @@ export { default as Sound } from "./sound.js";
  * @prop {number} height - the height of the video
  * @prop {number} frameRate - the framerate of the video
  * @prop {number} [chunk] - which chunk to render first
+ * @prop {*} [data]
  *
  * @typedef ChunkRequest
  * @prop {"chunk"} type
  * @prop {number} chunk
+ * @prop {*} [data]
  *
  * @typedef RenderOutput
  * @prop {"output"} type
@@ -405,5 +408,6 @@ export { default as Sound } from "./sound.js";
  * @template {VideoSrc} T
  * @callback VideoChunk
  * @param {T} videoSrc
+ * @param {*} data
  * @returns {Draw | Promise<Draw>}
  */
