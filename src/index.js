@@ -152,13 +152,15 @@ export default class VideoCreator extends HTMLElement {
    *   width: number;
    *   height: number;
    *   frameRate: number;
+   *   data: *;
    * }?}
    */
   #currentVideo = null;
   #currentVideoMatches() {
     return this.#currentVideo?.width === this.width &&
       this.#currentVideo?.height === this.height &&
-      this.#currentVideo?.frameRate === this.frameRate;
+      this.#currentVideo?.frameRate === this.frameRate &&
+      this.#currentVideo?.data === this.#data;
   }
 
   /** @type {Worker?} */
@@ -265,7 +267,7 @@ export default class VideoCreator extends HTMLElement {
         height: this.height,
         frameRate: this.frameRate,
         chunk,
-        data: this.data,
+        data: this.#data,
       }));
     }
     else {
@@ -275,7 +277,6 @@ export default class VideoCreator extends HTMLElement {
       worker.postMessage(/** @satisfies {import("./render").ChunkRequest} */ ({
         type: "chunk",
         chunk,
-        data: this.data,
       }));
     }
     this.#worker = worker;
@@ -285,6 +286,7 @@ export default class VideoCreator extends HTMLElement {
       width: this.width,
       height: this.height,
       frameRate: this.frameRate,
+      data: this.#data,
     };
 
 
@@ -546,11 +548,14 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
-  /**
-   * data that will be sent to the rendering thread on render
-   * @type {*}
-   */
-  data;
+  /** @type {*} */
+  #data;
+  get data() { return structuredClone(this.#data); }
+  set data(data) {
+    this.#data = structuredClone(data);
+
+    if (!this.#currentVideoMatches()) this.render();
+  }
 
 
   /** @type {ReturnType<typeof setTimeout>=} */

@@ -10,11 +10,6 @@ class Example extends VideoSrc {
     (this.canvas.getContext("2d"));
 
   videoPromise = this.getVideo(videoUrl, { start: 1.9, end: 3.9 });
-
-
-  afterRendered() {
-    console.log("rendered");
-  }
 }
 
 
@@ -70,8 +65,8 @@ const rotatingCircle = Example.defineChunk(async example => {
   };
 });
 
-const movingSquare = Example.defineChunk((example, text) => {
-  const { ctx, width, height, frameRate } = example;
+const movingSquare = Example.defineChunk(example => {
+  const { ctx, width, height, frameRate, data } = example;
 
 
   ctx.clearRect(0, 0, width, height);
@@ -91,13 +86,13 @@ const movingSquare = Example.defineChunk((example, text) => {
     ctx.fillRect(x, height / 2 - 50, 100, 100);
 
 
-    if (typeof text === "string") {
+    if (typeof data === "string") {
       ctx.fillStyle = "black";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = "20px Arial";
 
-      ctx.fillText(text, x + 50, height / 2);
+      ctx.fillText(data, x + 50, height / 2);
     }
 
 

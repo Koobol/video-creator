@@ -7,24 +7,28 @@ import { sleep, getMessage } from "./funcs.js";
 export default class VideoSrc {
   /**
    * only to be called by video-creator
-   * @param {{ canvas: OffscreenCanvas, frameRate: number }} init
+   * @param {{ canvas: OffscreenCanvas, frameRate: number, data: * }} init
    */
-  constructor({ canvas, frameRate }) {
-    /** the canvas to draw on */
+  constructor({ canvas, frameRate, data }) {
     this.#canvas = canvas;
 
 
-    /** the framerate of the video */
+    /** the data from the VideoCreator */
+    this.data = data;
+
+
     this.#frameRate = frameRate;
   }
 
   #frameRate;
+  /** the framerate of the video */
   get frameRate() { return this.#frameRate; }
 
   #frame = 0;
   get frame() { return this.#frame; }
 
   #canvas;
+  /** the canvas to draw on */
   get canvas() { return this.#canvas; }
 
 
@@ -184,8 +188,7 @@ export default class VideoSrc {
   static async #render(chunks) {
     const init = VideoSrc.#init ?? await getMessage("render init");
     VideoSrc.#init = null;
-    const { width, height, frameRate } = init;
-    let { data } = init;
+    const { width, height, frameRate, data } = init;
 
 
     let aborting = false;
@@ -211,7 +214,7 @@ export default class VideoSrc {
     const canvas = new OffscreenCanvas(width, height);
 
     const videoSrc = /** @type {InstanceType<T>} */
-      (new this({ canvas, frameRate }));
+      (new this({ canvas, frameRate, data }));
     await videoSrc.beforeAnything();
 
 
@@ -251,7 +254,7 @@ export default class VideoSrc {
           return;
         }
 
-        ({ chunk, data } = message);
+        ({ chunk } = message);
       }
       if (chunks.length !== 0)
         chunk = Math.floor(Math.max(0, Math.min(chunk, chunks.length - 1)));
@@ -270,7 +273,7 @@ export default class VideoSrc {
 
       /** @type {Draw} */
       const draw = chunks.length > 0 ?
-        await chunks[chunk](videoSrc, data) :
+        await chunks[chunk](videoSrc) :
         videoSrc.draw.bind(videoSrc);
       if (chunks.length === 0) await videoSrc.setup();
 
@@ -410,7 +413,6 @@ export { default as Sound } from "./sound.js";
  * @typedef ChunkRequest
  * @prop {"chunk"} type
  * @prop {number} chunk
- * @prop {*} [data]
  *
  * @typedef RenderOutput
  * @prop {"output"} type
@@ -481,6 +483,5 @@ export { default as Sound } from "./sound.js";
  * @template {VideoSrc} T
  * @callback VideoChunk
  * @param {T} videoSrc
- * @param {*} data
  * @returns {Draw | Promise<Draw>}
  */
