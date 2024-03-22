@@ -1,4 +1,4 @@
-import VideoSrc, { Video } from "../../src/render";
+import VideoSrc from "../../src/render";
 
 import videoUrl from "./video.webm?url";
 // import puppy from "./puppy.jpg?url";
@@ -9,8 +9,7 @@ class Example extends VideoSrc {
   ctx = /** @type {OffscreenCanvasRenderingContext2D} */
     (this.canvas.getContext("2d"));
 
-  /** @type {Video?} */
-  video = null;
+  videoPromise = this.getVideo(videoUrl, { start: 1.9, end: 3.9 });
 
 
   beforeAnything() {
@@ -112,11 +111,8 @@ const movingSquare = Example.defineChunk((example, text) => {
 });
 
 const video = Example.defineChunk(async example => {
-  if (example.video === null)
-    example.video = await example.getVideo(videoUrl, { start: 1.9, end: 3.9 });
-
-
-  const { video, ctx, width, height } = example;
+  const { videoPromise, ctx, width, height } = example;
+  const video = await videoPromise;
 
 
   video.currentTime = 0;
