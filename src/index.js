@@ -247,7 +247,7 @@ export default class VideoCreator extends HTMLElement {
     };
 
 
-    if (this.state === "rendered") this.reset();
+    if (this.state !== "waiting") this.reset();
     this.#state = "rendering";
 
     this.dispatchEvent(new Event("rendering"));
@@ -427,7 +427,7 @@ export default class VideoCreator extends HTMLElement {
     this.dispatchEvent(new Event("timeupdate"));
 
 
-    if (this.#state === "rendering") {
+    if (this.state === "rendering") {
       this.#worker?.postMessage(/** @type {import("./render").AbortSignal} */ ({
         type: "abort",
       }));

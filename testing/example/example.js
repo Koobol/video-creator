@@ -14,7 +14,7 @@ class Example extends VideoSrc {
 
 
   beforeAnything() {
-    console.log("this is before anything!");
+    // console.log("this is before anything!");
   }
 }
 

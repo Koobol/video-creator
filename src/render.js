@@ -172,14 +172,22 @@ export default class VideoSrc {
 
 
     let aborting = false;
+    /** @type {ChunkRequest | RenderInit?} */
+    let nextMessage = null
     /** @param {MessageEvent<ToRender>} event */
     const abortListener = ({ data }) => {
-      if (data.type !== "abort" || chunk === null) return;
-
-      aborting = true;
+      if (chunk === null) return;
 
 
-      self.removeEventListener("message", abortListener);
+      switch (data.type) {
+        case "abort":
+          aborting = true;
+          break;
+        case "chunk":
+        case "render init":
+          nextMessage = data;
+          break;
+      }
     }
     self.addEventListener("message", abortListener);
 
@@ -200,9 +208,12 @@ export default class VideoSrc {
       sounds.set(videoSrc, new Set());
 
 
+      aborting = false;
+
+
       if (chunk === null) {
         /** @type {RenderInit | ChunkRequest} */
-        const message = await new Promise(resolve => {
+        const message = nextMessage ?? await new Promise(resolve => {
           /** @param {MessageEvent<ToRender>} event */
           const onMessage = ({ data }) => {
             if (data.type !== "chunk" && data.type !== "render init") return;
@@ -212,6 +223,7 @@ export default class VideoSrc {
           }
           self.addEventListener("message", onMessage);
         });
+        nextMessage = null;
 
 
         if (message.type === "render init") {
@@ -275,6 +287,7 @@ export default class VideoSrc {
 
 
             chunk = null;
+            aborting = false;
 
 
             continue chunk;
@@ -324,6 +337,19 @@ export default class VideoSrc {
           speedChanges: getSpeedChanges(sound),
         });
       });
+
+
+      await sleep();
+      if (aborting) {
+        postMessage(/** @satisfies {AbortSignal} */ ({
+          type: "abort",
+        }));
+
+        chunk = null;
+        aborting = false;
+
+        continue;
+      }
 
 
       postMessage(/** @satisfies {RenderOutput} */ ({
