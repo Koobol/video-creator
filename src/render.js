@@ -159,6 +159,12 @@ export default class VideoSrc {
    */
   afterDraw() {}
 
+  /**
+   * will be called once a chunk is done rendering
+   * @returns {void | Promise<void>}
+   */
+  afterRendered() {}
+
 
   /** @type {RenderInit?} */
   static #init = null;
@@ -366,6 +372,9 @@ export default class VideoSrc {
 
         continue;
       }
+
+
+      await videoSrc.afterRendered();
 
 
       postMessage(/** @satisfies {RenderOutput} */ ({

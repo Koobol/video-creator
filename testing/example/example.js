@@ -11,11 +11,9 @@ class Example extends VideoSrc {
 
   videoPromise = this.getVideo(videoUrl, { start: 1.9, end: 3.9 });
 
-  beforeDraw() {
-    console.log("before draw");
-  }
-  afterDraw() {
-    console.log("after draw");
+
+  afterRendered() {
+    console.log("rendered");
   }
 }
 
