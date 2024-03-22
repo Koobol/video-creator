@@ -13,11 +13,8 @@ class Example extends VideoSrc {
   video = null;
 
 
-  beforeSetup() {
-    console.log("This is before setup!");
-  }
-  afterSetup() {
-    console.log("This is after setup!");
+  beforeAnything() {
+    console.log("this is before anything!");
   }
 }
 

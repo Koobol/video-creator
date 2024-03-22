@@ -132,6 +132,12 @@ export default class VideoSrc {
 
 
   /**
+   * will be called when the video is initialized
+   * @returns {void | Promise<void>}
+   */
+  beforeAnything() {}
+
+  /**
    * will be called before each chunk setup
    * @returns {void | Promise<void>}
    */
@@ -181,6 +187,7 @@ export default class VideoSrc {
 
     const videoSrc = /** @type {InstanceType<T>} */
       (new this({ canvas, frameRate }));
+    await videoSrc.beforeAnything();
 
 
     /** @type {number?} */
