@@ -11,6 +11,14 @@ class Example extends VideoSrc {
 
   /** @type {Video?} */
   video = null;
+
+
+  beforeSetup() {
+    console.log("This is before setup!");
+  }
+  afterSetup() {
+    console.log("This is after setup!");
+  }
 }
 
 

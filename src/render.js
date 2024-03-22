@@ -122,7 +122,6 @@ export default class VideoSrc {
    */
   setup() {}
 
-
   /**
    * function that will be called for every frame if no chunks,
    * return true to finish rendering
@@ -130,6 +129,18 @@ export default class VideoSrc {
    * @type {Draw}
    */
   draw() { throw new Error("no chunks or VideoSrc#draw function specified"); }
+
+
+  /**
+   * will be called before each chunk setup
+   * @returns {void | Promise<void>}
+   */
+  beforeSetup() {}
+  /**
+   * will be called after each chunk setup
+   * @returns {void | Promise<void>}
+   */
+  afterSetup() {}
 
 
   /** @type {RenderInit?} */
@@ -219,11 +230,15 @@ export default class VideoSrc {
       let checkNext = Date.now() + 500;
 
 
+      await videoSrc.beforeSetup();
+
       /** @type {Draw} */
       const draw = chunks.length > 0 ?
         await chunks[chunk](videoSrc, data) :
         videoSrc.draw.bind(videoSrc);
       if (chunks.length === 0) await videoSrc.setup();
+
+      await videoSrc.afterSetup();
 
 
       let maxPixelsExceeded = false;
