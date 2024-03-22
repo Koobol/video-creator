@@ -691,7 +691,10 @@ export default class VideoCreator extends HTMLElement {
   }
 
 
-  /** the length of the current chunk, in seconds */
+  /**
+   * the length of the current chunk, in seconds,
+   * if no chunk is rendered, returns null
+   */
   get length() {
     if (this.#frames === null) return null;
 
