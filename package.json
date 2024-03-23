@@ -1,6 +1,6 @@
 {
   "name": "video-creator",
-  "version": "4.0.3",
+  "version": "4.1.0",
   "description": "An npm package for creating videos using Javascript.",
   "exports": {
     ".": {
