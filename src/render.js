@@ -335,6 +335,22 @@ export default class VideoSrc {
       }
 
 
+      await sleep();
+      if (aborting) {
+        postMessage(/** @satisfies {AbortSignal} */ ({
+          type: "abort",
+        }));
+
+        chunk = null;
+        aborting = false;
+
+        continue;
+      }
+
+
+      await videoSrc.afterRendered();
+
+
       /** @type {AudioInstructions} */
       const audioInstructions = new Map();
       sounds.get(videoSrc)?.forEach(sound => {
@@ -362,22 +378,6 @@ export default class VideoSrc {
           speedChanges: getSpeedChanges(sound),
         });
       });
-
-
-      await sleep();
-      if (aborting) {
-        postMessage(/** @satisfies {AbortSignal} */ ({
-          type: "abort",
-        }));
-
-        chunk = null;
-        aborting = false;
-
-        continue;
-      }
-
-
-      await videoSrc.afterRendered();
 
 
       postMessage(/** @satisfies {RenderOutput} */ ({
